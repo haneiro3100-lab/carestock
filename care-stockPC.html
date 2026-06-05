@@ -610,12 +610,12 @@ function buildRoom() {
   const rooms = ROOMS[floor] || [];
   document.getElementById('room-content').innerHTML = rooms.map(rn => {
     const rs = getRoomState(floor, rn);
-    const cnt = products.filter(p=>rs.products[p.id]&&rs.products[p.id].qty>0).length;
+    const cnt = products.filter(p=>rs.products[String(p.id)]&&rs.products[String(p.id)].qty>0).length;
     return `<div class="room-card">
       <div class="room-hd">${rn}号室 ${cnt?'<span style="font-size:11px;color:#2a7a2a">'+cnt+'種類</span>':''}</div>
       <div style="padding:2px 0">
       ${products.filter(p=>!p.special).map(p => {
-        const qty = rs.products[p.id] ? rs.products[p.id].qty : 0;
+        const qty = rs.products[String(p.id)] ? rs.products[String(p.id)].qty : 0;
         return `<div class="room-row">
           <span style="font-size:12px">${p.short||p.name}</span>
           <div style="display:flex;align-items:center;gap:6px">
@@ -637,7 +637,7 @@ function cChange(rn, pid, d) {
   el.textContent = v;
   const rs = getRoomState(floor, rn);
   if (!rs.products) rs.products = {};
-  rs.products[pid] = { checked: v > 0, qty: v };
+  rs.products[String(pid)] = { checked: v > 0, qty: v };
   setRoomState(floor, rn, rs);
 }
 
@@ -647,7 +647,7 @@ function reflectRoom() {
   (ROOMS[floor]||[]).forEach(rn => {
     const rs = getRoomState(floor, rn);
     products.forEach(p => {
-      const v = rs.products[p.id];
+      const v = rs.products[String(p.id)];
       if (v && v.qty > 0) totals[p.id] += parseInt(v.qty)||0;
     });
   });
