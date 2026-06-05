@@ -765,17 +765,17 @@ function reflectRoom(silent) {
       state[floor][p.id].weeklyOverride = w > 0 ? w : null;
     }
   });
-  // デバッグ
-  const dbg = products.filter(p=>p.weeklyFixed===null).map(p=>p.name+':total='+totals[p.id]).join('\n');
-  const roomData = loadRoomData();
-  const keys = Object.keys(roomData).slice(0,3).join(', ');
-  alert('totals:\n'+dbg+'\n\nroomDatakeys:'+keys+'\nfloor:'+floor);
   // 反映後は常にbuildCardsで再描画（stateの値をinputに反映させるため）
   buildCards();
   updateSummary();
   if (!silent) showToast('✅ 居室合計を反映しました！');
+  // データがある場合のみ反映済みラベルを表示
+  const hasRoomData = (ROOMS[floor]||[]).some(rn => {
+    const rs = getRoomState(floor, rn);
+    return rs.products && Object.keys(rs.products).some(k => rs.products[k] && rs.products[k].qty > 0);
+  });
   const lbl = document.getElementById('room-reflect-label');
-  if (lbl) lbl.style.display = 'block';
+  if (lbl) lbl.style.display = hasRoomData ? 'block' : 'none';
 }
 
 
@@ -843,7 +843,6 @@ document.addEventListener('wheel', e => { if(document.activeElement.type==='numb
 initState();
 loadDaily();
 reflectRoom(true);  // 居室管理を自動反映（起動時はトースト非表示）
-document.getElementById("room-reflect-label").style.display = "block";
 buildCards();
 updateSummary();
 </script>
