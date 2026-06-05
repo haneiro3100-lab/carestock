@@ -688,8 +688,9 @@ function importRoomData(input) {
     try {
       const data = JSON.parse(e.target.result);
       localStorage.setItem('diaper_rooms', JSON.stringify(data));
-      showToast('📥 インポートしました！');
+      showToast('📥 インポートしました！居室管理タブで確認できます');
       if (cat === 'room') buildRoom();
+      else { switchCat('room', document.getElementById('cb-room')); }
     } catch(err) {
       showToast('❌ ファイルが正しくありません');
     }
