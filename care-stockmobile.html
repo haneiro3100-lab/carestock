@@ -1076,7 +1076,11 @@ function confirmOrder() {
 
   const orders = {};
   products.forEach(p => {
-    orders[p.id] = state[currentFloor][p.id].orderQty;
+    const s = state[currentFloor][p.id];
+    orders[p.id] = {
+      qty: s.orderQty,
+      stock: s.stockBoxes * p.perBox + s.stockBags * p.perBag
+    };
   });
 
   hist.push({ date: dateStr, floor: currentFloor, orders });
