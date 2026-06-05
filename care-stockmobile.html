@@ -1130,10 +1130,9 @@ function renderHistory() {
         const o = entry.orders[p.id];
         const qty = typeof o === 'object' ? o.qty : o;
         const stock = typeof o === 'object' && o.stock !== undefined ? o.stock + '枚' : '-';
-        return `<div class="history-item" style="display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center">
-          <span>${p.short || p.name}</span>
-          <span style="font-size:10px;color:#888">${o.stockBoxes||0}箱${o.stockBags||0}袋<span style="font-size:9px;color:#bbb">（${stock}枚）</span></span>
-          <span style="font-weight:800;color:#e65100">${qty}箱</span>
+        return `<div class="history-item" style="padding:4px 0;border-bottom:1px solid #f0f0f0">
+          <div style="font-size:12px;font-weight:700">${p.short || p.name}</div>
+          <div style="font-size:11px;color:#666">在庫数：${o.stockBoxes||0}箱${o.stockBags||0}袋<span style="font-size:10px;color:#bbb">（${stock}枚）</span>　注文数：<span style="color:#e65100;font-weight:800">${qty}箱</span></div>
         </div>`;
       })
       .join("");
