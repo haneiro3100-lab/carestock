@@ -73,13 +73,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-ser
 .stock-grid {
   display: grid;
   grid-template-columns: 1fr 30px 1fr;
-  grid-template-rows: auto auto;
-  gap: 4px 8px; margin-bottom: 10px;
+  gap: 4px 8px; margin-bottom: 4px;
 }
 .box-col { grid-column:1; grid-row:1; }
-.bag-col { grid-column:1; grid-row:2; }
-.sep-col { grid-column:2; grid-row:1/3; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:18px; color:#bbb; font-weight:700; gap:4px; }
-.tot-col { grid-column:3; grid-row:1/3; display:flex; flex-direction:column; justify-content:center; }
+.bag-col { grid-column:2; grid-row:1; }
 .stock-lbl { font-size: 11px; font-weight: 700; text-align: center; margin-bottom: 3px; }
 .stock-in {
   width: 100%; padding: 8px 4px; border-radius: 8px;
@@ -523,7 +520,7 @@ function updateCard(pid) {
   const ov = state[floor][pid].weeklyOverride;
 
   const totEl = document.getElementById('tot-'+pid);
-  if (totEl) totEl.textContent = stock + '枚';
+  if (totEl) totEl.textContent = stock;
 
   const sugEl = document.getElementById('sug-'+pid);
   if (sugEl) sugEl.textContent = sug > 0 ? '（推奨'+sug+'）' : '';
