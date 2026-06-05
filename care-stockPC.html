@@ -765,6 +765,9 @@ function reflectRoom(silent) {
       state[floor][p.id].weeklyOverride = w > 0 ? w : null;
     }
   });
+  // デバッグ
+  const dbg = products.filter(p=>p.weeklyFixed===null).map(p=>p.name+':dailyUse='+state[floor][p.id].dailyUse).join('\n');
+  alert(dbg);
   // 反映後は常にbuildCardsで再描画（stateの値をinputに反映させるため）
   buildCards();
   updateSummary();
