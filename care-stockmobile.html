@@ -1010,6 +1010,7 @@ function switchFloor(floor, btn) {
   document.getElementById("floor-banner").textContent = floorLabel(floor) + "の在庫を入力中";
   document.getElementById("save-floor-label").textContent = floorLabel(floor);
   syncInputsToState();
+  reflectRoomToDaily(true);  // フロア切替時も自動反映
   updateSaveDateLabel();
   products.forEach(p => updatePrevBadge(p.id));
   renderHistory();
