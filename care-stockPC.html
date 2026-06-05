@@ -737,6 +737,14 @@ function importRoomData(input) {
   };
   reader.readAsText(file);
 }
+
+function deletePcHistory(index) {
+  const hist = loadHistory();
+  hist.splice(index, 1);
+  saveHistory(hist);
+  toggleHistory();
+  toggleHistory();
+}
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
