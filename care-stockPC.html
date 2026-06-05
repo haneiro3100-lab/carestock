@@ -765,12 +765,8 @@ function reflectRoom(silent) {
       state[floor][p.id].weeklyOverride = w > 0 ? w : null;
     }
   });
-  // 手動反映時はbuildCards、起動時はupdateCardのみ
-  if (!silent) {
-    buildCards();
-  } else {
-    products.forEach(p => updateCard(p.id));
-  }
+  // 反映後は常にbuildCardsで再描画（stateの値をinputに反映させるため）
+  buildCards();
   updateSummary();
   if (!silent) showToast('✅ 居室合計を反映しました！');
   const lbl = document.getElementById('room-reflect-label');
@@ -841,9 +837,9 @@ document.addEventListener('wheel', e => { if(document.activeElement.type==='numb
 // 初期化実行
 initState();
 loadDaily();
-buildCards();
 reflectRoom(true);  // 居室管理を自動反映（起動時はトースト非表示）
 document.getElementById("room-reflect-label").style.display = "block";
+buildCards();
 updateSummary();
 </script>
 </body>
