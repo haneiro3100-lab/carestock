@@ -104,7 +104,7 @@
   .badge-saved { font-size: 10px; font-weight: 700; background: #e8f5ee; color: #1a6a44; border: 1px solid #a0d4b0; border-radius: 6px; padding: 3px 10px; }
 
   .card-body { padding: 10px 14px 14px; background: #fff; }
-  .stock-row { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 10px; }
+  .stock-row { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 4px; }
   .stock-col { flex: 1; }
   .stock-sep { color: #ccc; font-size: 20px; padding-top: 22px; }
   .col-label { font-size: 18px; font-weight: 700; margin-bottom: 3px; text-align: center; }
@@ -653,11 +653,11 @@ function buildCards() {
               oninput="onInput(${p.id},'stockBags',this.value)">
             <div class="sub-pieces sub-bag" id="sgp-${p.id}" style="display:none"></div>
           </div>
-          <div class="stock-sep">=</div>
-          <div class="stock-col">
-            <div class="col-label label-total">合計</div>
-            <div class="total-box" id="tot-${p.id}">0<span class="total-unit">枚</span></div>
-          </div>
+        </div>
+        <div style="text-align:right;padding-right:4px;margin-top:-4px;margin-bottom:6px">
+          <span style="font-size:12px;color:#888">合計：</span>
+          <span class="total-box" id="tot-${p.id}" style="font-size:14px;font-weight:700;color:#555;background:none;border:none;padding:0">0</span>
+          <span style="font-size:11px;color:#888">枚</span>
         </div>
         <div class="bottom-row">
           <div class="bottom-col" id="after-col-${p.id}" style="flex:0.7">
