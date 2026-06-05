@@ -836,9 +836,9 @@ document.addEventListener('wheel', e => { if(document.activeElement.type==='numb
 // 初期化実行
 initState();
 loadDaily();
+buildCards();
 reflectRoom(true);  // 居室管理を自動反映（起動時はトースト非表示）
 document.getElementById("room-reflect-label").style.display = "block";
-buildCards();
 updateSummary();
 </script>
 </body>
