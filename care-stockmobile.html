@@ -1116,8 +1116,20 @@ function renderHistory() {
   let html = "";
   hist.forEach(entry => {
     const items = products
-      .filter(p => entry.orders[p.id] > 0)
-      .map(p => `<div class="history-item">${p.short || p.name} ${entry.orders[p.id]}箱</div>`)
+      .filter(p => {
+        const o = entry.orders[p.id];
+        return o && (typeof o === 'object' ? o.qty > 0 : o > 0);
+      })
+      .map(p => {
+        const o = entry.orders[p.id];
+        const qty = typeof o === 'object' ? o.qty : o;
+        const stock = typeof o === 'object' && o.stock !== undefined ? o.stock + '枚' : '-';
+        return `<div class="history-item" style="display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center">
+          <span>${p.short || p.name}</span>
+          <span style="font-size:10px;color:#888">在庫${stock}</span>
+          <span style="font-weight:800;color:#e65100">${qty}箱</span>
+        </div>`;
+      })
       .join("");
     html += `<div class="history-entry">
       <div class="history-date">${entry.date}</div>
