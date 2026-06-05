@@ -1309,6 +1309,9 @@ function buildRoomSection() {
       </div>
       <div class="room-body" id="rbody-${roomNo}">
         ${productRows}
+        <div style="text-align:center;padding:10px 0 4px">
+          <button onclick="toggleRoom(${roomNo})" style="padding:6px 20px;border:none;border-radius:20px;background:#d6edd6;color:#2a5a2a;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">▲ 折りたたむ</button>
+        </div>
       </div>
     </div>`;
   });
@@ -1323,6 +1326,15 @@ function toggleRoom(roomNo) {
   const isOpen = body.style.display === 'block';
   body.style.display = isOpen ? 'none' : 'block';
   toggle.textContent = isOpen ? '▼' : '▲';
+  if (isOpen) {
+    // 閉じる時：そのカードをヘッダー分オフセットしてスクロール
+    const card = document.getElementById('room-card-' + roomNo);
+    if (card) {
+      const header = document.getElementById('header');
+      const offset = card.getBoundingClientRect().top + window.scrollY - header.offsetHeight - 8;
+      window.scrollTo({ top: offset, behavior: 'smooth' });
+    }
+  }
 }
 
 
