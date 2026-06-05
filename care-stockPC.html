@@ -441,7 +441,11 @@ function switchFloor(f, btn) {
   btn.classList.add('active');
   loadDaily();
   reflectRoom(true);
-  buildCards();
+  if (cat === 'room') {
+    buildRoom();
+  } else {
+    buildCards();
+  }
   updateSummary();
 }
 
