@@ -281,6 +281,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-ser
     <button onclick="exportHistoryExcel()"
       class="admin-tool"
       style="width:100%;padding:8px;border-radius:8px;border:1px solid #1976d2;background:#e3f2fd;color:#1976d2;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">📊 履歴をExcel書き出し</button>
+    <div id="history-sec" style="display:none">
+      <div class="panel-title">📚 注文履歴</div>
+      <div id="history-content" style="font-size:11px;color:#555"></div>
+    </div>
+    <div style="margin-bottom:8px" class="admin-tool">
+      <button onclick="toggleSunHist()" style="width:100%;padding:6px 10px;border:1px solid #ccc;border-radius:8px;background:#f9f9f9;color:#555;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;text-align:left">
+        ▶ 来週の日曜在庫予想 履歴
+      </button>
+      <div id="sun-hist-panel" style="display:none;margin-top:6px;font-size:11px;overflow-x:auto"></div>
+    </div>
     <div class="logic-box">
       <div class="logic-title">📐 計算ロジック</div>
       <div class="logic-sec">【パッド類】</div>
@@ -293,10 +303,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-ser
       <div>テープ・リハパン：木曜残庫 ＋ 注文箱数×1箱枚数 − 居室集計×2（入浴使用）− 1袋×0.5（予備）</div>
       <div class="logic-sec admin-tool">【木曜届く前の残り】</div>
       <div class="admin-tool">現在庫 − 1日使用量×4日 − 予備1袋</div>
-    </div>
-    <div id="history-sec" style="display:none">
-      <div class="panel-title">📚 注文履歴</div>
-      <div id="history-content" style="font-size:11px;color:#555"></div>
     </div>
   </div>
 </div>
@@ -558,26 +564,24 @@ function buildCards() {
       const weeklySection = '<div><div class="info-lbl">' + (isAdmin ? '週必要枚数' : '') + '</div>'
         + (isAdmin ? '<div class="box-weekly" id="wk-wrap-' + p.id + '" style="' + ovStyle + '"><div class="info-val" id="wk-' + p.id + '">' + wn + '枚</div>' + ovLabel + '</div>' + weeklyInput : '') + '</div>';
       const afTapeHtml = isAdmin ? '<div class="info-lbl" style="color:#bbb">木曜届く前の残り</div><div class="box-after" id="af-wrap-' + p.id + '"><div class="info-val" id="af-' + p.id + '" style="font-size:12px">-</div></div>' : '';
-      const prevSunTape = (() => { try { const r = JSON.parse(localStorage.getItem('diaper_sun_record_' + floor) || 'null'); return r && r.items && r.items[p.id] !== undefined ? '<div class="info-lbl" style="color:#bbb;margin-top:4px">前回予想（' + r.date + '）</div><div class="box-after"><div class="info-val" style="font-size:12px">' + r.items[p.id] + '枚</div></div>' : ''; } catch(e) { return ''; } })();
-      bottomRow = '<div class="row2">'
+            bottomRow = '<div class="row2">'
         + weeklySection
         + '<div>' + afTapeHtml + '</div></div>'
         + '<div class="row2"><div></div>'
         + '<div><div class="info-lbl" style="color:#bbb;font-size:20px">来週の日曜の在庫予想</div>'
         + '<div class="box-after" id="sun-wrap-' + p.id + '"><div class="info-val" id="sun-' + p.id + '" style="font-size:12px">-</div></div>'
-        + (isAdmin ? prevSunTape : '')
+        + (isAdmin ? getPrevSunHtml(p.id, p) : '')
         + '</div></div>';
     } else {
       const dailyInput = isAdmin ? '<div class="info-lbl">1日使用量</div><input type="number" class="daily-in" value="' + (s.dailyUse||'') + '" placeholder="0" oninput="onInput(' + p.id + ',\'dailyUse\',this.value)">' : '';
       const afHtml = isAdmin ? '<div class="info-lbl" style="color:#bbb">木曜届く前の残り</div><div class="box-after" id="af-wrap-' + p.id + '"><div class="info-val" id="af-' + p.id + '" style="font-size:12px">-</div></div>' : '';
-      const prevSunPad = (() => { try { const r = JSON.parse(localStorage.getItem('diaper_sun_record_' + floor) || 'null'); return r && r.items && r.items[p.id] !== undefined ? '<div class="info-lbl" style="color:#bbb;margin-top:4px">前回予想（' + r.date + '）</div><div class="box-after"><div class="info-val" style="font-size:12px">' + r.items[p.id] + '枚</div></div>' : ''; } catch(e) { return ''; } })();
-      bottomRow = '<div class="row2">'
+            bottomRow = '<div class="row2">'
         + '<div>' + dailyInput + '</div>'
         + '<div>' + afHtml + '</div></div>'
         + '<div class="row2"><div></div>'
         + '<div><div class="info-lbl" style="color:#bbb;font-size:20px">来週の日曜の在庫予想</div>'
         + '<div class="box-after" id="sun-wrap-' + p.id + '"><div class="info-val" id="sun-' + p.id + '" style="font-size:12px">-</div></div>'
-        + (isAdmin ? prevSunPad : '')
+        + (isAdmin ? getPrevSunHtml(p.id, p) : '')
         + '</div></div>';
     }
 
@@ -725,9 +729,16 @@ function confirmOrder() {
   history.unshift({ week: new Date().toLocaleDateString('ja-JP'), floor, items });
   if (history.length > 12) history.pop();
   saveHistory(history);
-  // 来週日曜の在庫予想を保存
+  // 来週日曜の在庫予想を履歴として保存（4週分）
   const sunRecord = { date: new Date().toLocaleDateString('ja-JP'), floor, items: {} };
   products.forEach(p => { sunRecord.items[p.id] = Math.round(calcSundayStock(p)); });
+  const sunHistKey = 'diaper_sun_hist_' + floor;
+  let sunHist = [];
+  try { sunHist = JSON.parse(localStorage.getItem(sunHistKey) || '[]'); } catch(e) {}
+  sunHist.unshift(sunRecord);
+  if (sunHist.length > 4) sunHist = sunHist.slice(0, 4);
+  localStorage.setItem(sunHistKey, JSON.stringify(sunHist));
+  // 後方互換：最新を従来キーにも保存
   localStorage.setItem('diaper_sun_record_' + floor, JSON.stringify(sunRecord));
   showToast('✅ 注文を確定しました！');
 }
@@ -736,20 +747,66 @@ function toggleHistory() {
   const sec = document.getElementById('history-sec');
   const show = sec.style.display === 'none';
   sec.style.display = show ? 'block' : 'none';
-  if (show) {
-    const history = loadHistory();
-    document.getElementById('history-content').innerHTML = history.length === 0 ? '履歴なし' :
-      history.map((h,i) => `<div style="margin-bottom:8px;padding:8px;background:#f9f9f9;border-radius:8px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-          <div style="font-weight:700;color:#2a4a2a">${h.week} ${h.floor}</div>
-          <button onclick="deletePcHistory('${h.week}_${h.floor}')" style="padding:2px 8px;border:1px solid #ffaaaa;border-radius:6px;background:#fff5f5;color:#e53935;font-size:10px;cursor:pointer;font-family:inherit">削除</button>
-        </div>
-        ${(h.items||[]).map(i2=>`<div style="padding:4px 0;border-bottom:1px solid #f0f0f0">
-          <div style="font-size:12px;font-weight:700">${i2.name}</div>
-          <div style="font-size:11px;color:#666">在庫数：${i2.stockBoxes||0}箱${i2.stockBags||0}袋<span style="font-size:10px;color:#bbb">（${i2.stock||0}枚）</span>　注文数：<span style="color:#e65100;font-weight:800">${i2.qty}箱</span></div>
-        </div>`).join('')}
-      </div>`).join('');
+  if (show) renderHistory();
+}
+
+function renderHistory() {
+  const history = loadHistory();
+  if (!history.length) {
+    document.getElementById('history-content').innerHTML = '履歴なし';
+    return;
   }
+
+  // 月ごとにグループ化
+  const now = new Date();
+  const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const prevMonthStr = prevMonth.getFullYear() + '/' + String(prevMonth.getMonth()+1).padStart(2,'0');
+
+  const groups = {};
+  history.forEach(h => {
+    const dateStr = h.week || '';
+    const parts = dateStr.split('/');
+    const monthKey = parts.length >= 2 ? parts[0] + '/' + parts[1].padStart(2,'0') : '不明';
+    if (!groups[monthKey]) groups[monthKey] = [];
+    groups[monthKey].push(h);
+  });
+
+  const monthKeys = Object.keys(groups).sort().reverse();
+  let html = '';
+  monthKeys.forEach(month => {
+    const isPrev = month === prevMonthStr;
+    const isOpen = isPrev;
+    const label = month + '月';
+    html += `<div style="margin-bottom:6px;border:1px solid #ddd;border-radius:8px;overflow:hidden">
+      <div onclick="toggleHistMonth(this)" style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:${isPrev?'#e8f5e9':'#f5f5f5'};cursor:pointer;font-size:12px;font-weight:700;color:#2a4a2a">
+        <span>${label}（${groups[month].length}件）</span>
+        <span>${isOpen?'▲':'▼'}</span>
+      </div>
+      <div style="display:${isOpen?'block':'none'};padding:6px 8px">
+        ${groups[month].map(h => `<div style="margin-bottom:6px;padding:6px;background:#f9f9f9;border-radius:6px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+            <div style="font-weight:700;color:#2a4a2a;font-size:11px">${h.week} ${h.floor}</div>
+            <button onclick="deletePcHistory('${h.week}_${h.floor}')" style="padding:2px 6px;border:1px solid #ffaaaa;border-radius:4px;background:#fff5f5;color:#e53935;font-size:9px;cursor:pointer;font-family:inherit">削除</button>
+          </div>
+          ${(h.items||[]).map(i2=>`<div style="padding:3px 0;border-bottom:1px solid #f0f0f0;font-size:10px">
+            <span style="font-weight:700">${i2.name}</span>
+            <span style="color:#666;margin-left:6px">在庫 ${i2.stockBoxes||0}箱${i2.stockBags||0}袋</span>
+            <span style="color:#e65100;font-weight:800;margin-left:6px">注文 ${i2.qty}箱</span>
+          </div>`).join('')}
+        </div>`).join('')}
+      </div>
+    </div>`;
+  });
+
+  document.getElementById('history-content').innerHTML = html;
+}
+
+function toggleHistMonth(header) {
+  const body = header.nextElementSibling;
+  const arrow = header.querySelector('span:last-child');
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  arrow.textContent = isOpen ? '▼' : '▲';
 }
 
 function buildRoom() {
@@ -870,18 +927,7 @@ function deletePcHistory(key) {
   const newHist = hist.filter(h => (h.week + '_' + h.floor) !== key);
   saveHistory(newHist);
   // 履歴パネルを再描画（開閉せず）
-  const history = loadHistory();
-  document.getElementById('history-content').innerHTML = history.length === 0 ? '履歴なし' :
-    history.map((h,i) => `<div style="margin-bottom:8px;padding:8px;background:#f9f9f9;border-radius:8px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-        <div style="font-weight:700;color:#2a4a2a">${h.week} ${h.floor}</div>
-        <button onclick="deletePcHistory('${h.week}_${h.floor}')" style="padding:2px 8px;border:1px solid #ffaaaa;border-radius:6px;background:#fff5f5;color:#e53935;font-size:10px;cursor:pointer;font-family:inherit">削除</button>
-      </div>
-      ${(h.items||[]).map(i2=>`<div style="padding:4px 0;border-bottom:1px solid #f0f0f0">
-        <div style="font-size:12px;font-weight:700">${i2.name}</div>
-        <div style="font-size:11px;color:#666">在庫数：${i2.stockBoxes||0}箱${i2.stockBags||0}袋<span style="font-size:10px;color:#bbb">（${i2.stock||0}枚）</span>　注文数：<span style="color:#e65100;font-weight:800">${i2.qty}箱</span></div>
-      </div>`).join('')}
-    </div>`).join('');
+renderHistory();
 }
 
 function exportHistoryExcel() {
@@ -1035,6 +1081,65 @@ function importFloorDataPc(input, targetFloor) {
     input.value = '';
   };
   reader.readAsText(file);
+}
+
+function getPrevSunHtml(pid, p) {
+  try {
+    const r = JSON.parse(localStorage.getItem('diaper_sun_record_' + floor) || 'null');
+    if (!r || !r.items || r.items[pid] === undefined) return '';
+    const val = r.items[pid];
+    const boxes = Math.floor(Math.max(0,val)/p.perBox);
+    const rem = Math.max(0,val)%p.perBox;
+    const bags = Math.floor(rem/p.perBag);
+    const disp = val < 0 ? '不足' : ((boxes>0?boxes+'箱':'')+(bags>0?bags+'袋':'')+'('+val+'枚)');
+    return '<div class="info-lbl" style="color:#bbb;margin-top:4px">前回予想（' + r.date + '）</div>'
+         + '<div class="box-after"><div class="info-val" style="font-size:14px">' + disp + '</div></div>';
+  } catch(e) { return ''; }
+}
+
+function toggleSunHist() {
+  const panel = document.getElementById('sun-hist-panel');
+  const btn = panel.previousElementSibling;
+  const isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : 'block';
+  btn.textContent = (isOpen ? '▶' : '▼') + ' 来週の日曜在庫予想 履歴';
+  if (!isOpen) renderSunHist();
+}
+
+function renderSunHist() {
+  const panel = document.getElementById('sun-hist-panel');
+  const key = 'diaper_sun_hist_' + floor;
+  let hist = [];
+  try { hist = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
+  if (!hist.length) { panel.innerHTML = '<div style="color:#aaa;padding:4px">履歴なし</div>'; return; }
+
+  // 表示する商品（注文があったもの）
+  let html = '<table style="border-collapse:collapse;width:100%;font-size:10px">';
+  html += '<tr style="background:#f0f0f0"><th style="padding:3px 6px;text-align:left">商品</th>';
+  hist.forEach(h => {
+    html += '<th style="padding:3px 6px;text-align:center;white-space:nowrap">' + h.date + '</th>';
+  });
+  html += '</tr>';
+
+  products.filter(p => !p.special).forEach(p => {
+    const hasData = hist.some(h => h.items && h.items[p.id] !== undefined);
+    if (!hasData) return;
+    html += '<tr style="border-bottom:1px solid #eee">';
+    html += '<td style="padding:3px 6px;font-weight:700">' + (p.short||p.name) + '</td>';
+    hist.forEach(h => {
+      const val = h.items ? h.items[p.id] : undefined;
+      if (val === undefined) { html += '<td style="padding:3px 6px;text-align:center;color:#bbb">-</td>'; return; }
+      const boxes = Math.floor(Math.max(0,val)/p.perBox);
+      const rem = Math.max(0,val)%p.perBox;
+      const bags = Math.floor(rem/p.perBag);
+      const disp = val < 0 ? '<span style="color:#e53935">不足</span>' : (boxes>0?boxes+'箱':'')+(bags>0?bags+'袋':'')+'<br><span style="color:#aaa">('+val+'枚)</span>';
+      html += '<td style="padding:3px 6px;text-align:center">' + disp + '</td>';
+    });
+    html += '</tr>';
+  });
+
+  html += '</table>';
+  panel.innerHTML = html;
 }
 function showToast(msg) {
   const t = document.getElementById('toast');
