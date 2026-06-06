@@ -731,12 +731,15 @@ function buildRoom() {
     const rs = getRoomState(floor, rn);
     const cnt = products.filter(p=>rs.products[String(p.id)]&&rs.products[String(p.id)].qty>0).length;
     return `<div class="room-card">
-      <div class="room-hd">${rn}号室 ${cnt?'<span style="font-size:11px;color:#2a7a2a">'+cnt+'種類</span>':''}</div>
-      <div style="padding:2px 0">
+      <div class="room-hd" onclick="toggleRoomPc(${rn})" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center">
+        <span>${rn}号室 ${cnt?'<span style="font-size:11px;color:#2a7a2a">'+cnt+'種類</span>':''}</span>
+        <span id="rtoggle-${rn}" style="font-size:12px;color:#666">▼</span>
+      </div>
+      <div id="rbody-${rn}" style="display:none;padding:2px 0">
       ${products.filter(p=>!p.special).map(p => {
         const qty = rs.products[String(p.id)] ? rs.products[String(p.id)].qty : 0;
-        return `<div class="room-row">
-          <span style="font-size:12px">${p.short||p.name}</span>
+        return `<div class="room-row" style="display:grid;grid-template-columns:1fr auto;align-items:center">
+          <span style="font-size:13px;text-align:right;padding-right:12px">${p.short||p.name}</span>
           <div style="display:flex;align-items:center;gap:6px">
             <button class="c-btn" onclick="cChange(${rn},${p.id},-1)">−</button>
             <span class="c-val" id="rq-${rn}-${p.id}">${qty}</span>
@@ -747,6 +750,15 @@ function buildRoom() {
       </div>
     </div>`;
   }).join('');
+}
+
+function toggleRoomPc(rn) {
+  const body = document.getElementById('rbody-' + rn);
+  const toggle = document.getElementById('rtoggle-' + rn);
+  if (!body) return;
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  toggle.textContent = isOpen ? '▼' : '▲';
 }
 
 function cChange(rn, pid, d) {
