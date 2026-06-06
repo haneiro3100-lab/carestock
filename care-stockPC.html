@@ -249,6 +249,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-ser
     <button class="btn-confirm" onclick="confirmOrder()">✅ 注文確定・履歴に保存</button>
     <button onclick="toggleHistory()"
       style="width:100%;padding:8px;border-radius:8px;border:1px solid #aaa;background:#f5f5f5;color:#555;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">📋 注文履歴</button>
+    <button onclick="exportHistoryExcel()"
+      class="admin-tool"
+      style="width:100%;padding:8px;border-radius:8px;border:1px solid #1976d2;background:#e3f2fd;color:#1976d2;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">📊 履歴をExcel書き出し</button>
     <div class="logic-box">
       <div class="logic-title">📐 計算ロジック</div>
       <div class="logic-sec">【パッド類】</div>
@@ -824,6 +827,43 @@ function deletePcHistory(key) {
         <div style="font-size:11px;color:#666">在庫数：${i2.stockBoxes||0}箱${i2.stockBags||0}袋<span style="font-size:10px;color:#bbb">（${i2.stock||0}枚）</span>　注文数：<span style="color:#e65100;font-weight:800">${i2.qty}箱</span></div>
       </div>`).join('')}
     </div>`).join('');
+}
+
+function exportHistoryExcel() {
+  const history = loadHistory();
+  if (!history.length) { showToast('履歴がありません'); return; }
+
+  // TSV形式でExcel互換のデータを作成
+  let rows = [];
+  rows.push(['日付', 'フロア', '商品名', '在庫箱数', '在庫袋数', '在庫枚数', '注文箱数']);
+
+  history.forEach(h => {
+    (h.items || []).forEach(item => {
+      rows.push([
+        h.week || '',
+        h.floor || '',
+        item.name || '',
+        item.stockBoxes !== undefined ? item.stockBoxes : '',
+        item.stockBags !== undefined ? item.stockBags : '',
+        item.stock !== undefined ? item.stock : '',
+        item.qty || 0
+      ]);
+    });
+    // 区切り行
+    rows.push(['', '', '', '', '', '', '']);
+  });
+
+  const tsv = rows.map(r => r.join('\t')).join('\n');
+  const bom = '\uFEFF'; // Excel用BOM
+  const blob = new Blob([bom + tsv], { type: 'text/tab-separated-values' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const date = new Date().toLocaleDateString('ja-JP').replace(/\//g, '-');
+  a.download = 'order-history-' + date + '.tsv';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('📊 Excelファイルを書き出しました');
 }
 function showToast(msg) {
   const t = document.getElementById('toast');
