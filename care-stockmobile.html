@@ -1688,20 +1688,32 @@ function importFloorData(input, targetFloor) {
   reader.onload = e => {
     try {
       const data = JSON.parse(e.target.result);
-      // 1日使用量を上書き
-      if (data.daily) {
-        localStorage.setItem('diaper_daily_' + targetFloor, JSON.stringify(data.daily));
-      }
-      // 居室データを該当フロアのみ上書き（他フロアは保持）
-      if (data.rooms) {
-        const all = {};
-        try { Object.assign(all, JSON.parse(localStorage.getItem('diaper_rooms') || '{}')); } catch(e) {}
-        // 既存の同フロアデータを削除して新データで上書き
+      const all = {};
+      try { Object.assign(all, JSON.parse(localStorage.getItem('diaper_rooms') || '{}')); } catch(e2) {}
+
+      // 古い形式：キーが「3F_301」のような居室データのみのJSON
+      const isOldFormat = Object.keys(data).some(k => /^[23]F_\d+$/.test(k));
+
+      if (isOldFormat) {
+        // 古い形式：そのまま居室データとして読み込む
         Object.keys(all).forEach(k => { if (k.startsWith(targetFloor + '_')) delete all[k]; });
-        Object.assign(all, data.rooms);
+        // targetFloorのキーのみ取り込む
+        Object.keys(data).forEach(k => {
+          if (k.startsWith(targetFloor + '_')) all[k] = data[k];
+        });
         localStorage.setItem('diaper_rooms', JSON.stringify(all));
+      } else {
+        // 新しい形式：daily + rooms
+        if (data.daily) {
+          localStorage.setItem('diaper_daily_' + targetFloor, JSON.stringify(data.daily));
+        }
+        if (data.rooms) {
+          Object.keys(all).forEach(k => { if (k.startsWith(targetFloor + '_')) delete all[k]; });
+          Object.assign(all, data.rooms);
+          localStorage.setItem('diaper_rooms', JSON.stringify(all));
+        }
       }
-      // 画面を再描画
+
       FLOORS.forEach(f => loadDailyUse(f));
       buildCards();
       syncInputsToState();
@@ -1746,6 +1758,21 @@ function importData(event) {
     const statusEl = document.getElementById('import-status');
     try {
       const data = JSON.parse(e.target.result);
+      // 古い居室データ形式（3F_301等のキー）の場合は居室データとして読み込む
+      const isOldRoomFormat = Object.keys(data).some(k => /^[23]F_\d+$/.test(k));
+      if (isOldRoomFormat) {
+        const all = {};
+        try { Object.assign(all, JSON.parse(localStorage.getItem('diaper_rooms') || '{}')); } catch(e2) {}
+        Object.assign(all, data);
+        localStorage.setItem('diaper_rooms', JSON.stringify(all));
+        buildCards(); syncInputsToState(); reflectRoomToDaily(true);
+        statusEl.style.display = '';
+        statusEl.className = 'ok';
+        statusEl.textContent = '✓ 居室データを読み込みました！';
+        showToast('📥 居室データを読み込みました！');
+        event.target.value = '';
+        return;
+      }
       if (!data.floors) throw new Error('形式が違います');
       FLOORS.forEach(f => {
         if (!data.floors[f]) return;
