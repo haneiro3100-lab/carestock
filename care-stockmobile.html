@@ -463,21 +463,27 @@
     キャッシュクリアや機種変更の前に書き出しておきましょう。
   </div>
   <div class="backup-btns">
-    <button class="btn-export" onclick="exportData()">📤 書き出し（JSON）</button>
+    <button class="btn-export" onclick="exportData()">📤 全データ書き出し</button>
     <label class="btn-import">
-      📥 読み込み（JSON）
+      📥 全データ読み込み
       <input type="file" accept=".json" onchange="importData(event)" style="display:none">
     </label>
   </div>
   <div id="import-status" style="display:none"></div>
   <div style="border-top:1px solid #a0d4b0;margin:10px 0 8px"></div>
-  <div class="backup-title">🏠 居室管理データ</div>
-  <div class="backup-desc">スマホ↔PC間でデータを共有できます。</div>
+  <div class="backup-title">🏠 フロア別（使用量＋居室）</div>
   <div class="backup-btns">
-    <button class="btn-export" onclick="exportRoomData()">📤 居室データ書き出し</button>
+    <button class="btn-export" onclick="exportFloorData('2F')">📤 2階 書き出し</button>
     <label class="btn-import">
-      📥 居室データ読み込み
-      <input type="file" accept=".json" onchange="importRoomData(this)" style="display:none">
+      📥 2階 読み込み
+      <input type="file" accept=".json" onchange="importFloorData(this,'2F')" style="display:none">
+    </label>
+  </div>
+  <div class="backup-btns" style="margin-top:6px">
+    <button class="btn-export" onclick="exportFloorData('3F')">📤 3階 書き出し</button>
+    <label class="btn-import">
+      📥 3階 読み込み
+      <input type="file" accept=".json" onchange="importFloorData(this,'3F')" style="display:none">
     </label>
   </div>
 </div>
@@ -1636,15 +1642,89 @@ function importRoomData(input) {
   };
   reader.readAsText(file);
 }
+
+function exportFloorData(floor) {
+  const data = {};
+  // 1日使用量
+  const daily = {};
+  try { Object.assign(daily, JSON.parse(localStorage.getItem('diaper_daily_' + floor) || '{}')); } catch(e) {}
+  data.daily = daily;
+  data.floor = floor;
+
+  // 居室データ（そのフロアのみ）
+  const roomData = {};
+  try {
+    const all = JSON.parse(localStorage.getItem('diaper_rooms') || '{}');
+    Object.keys(all).forEach(k => {
+      if (k.startsWith(floor + '_')) roomData[k] = all[k];
+    });
+  } catch(e) {}
+  data.rooms = roomData;
+
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const date = new Date().toLocaleDateString('ja-JP').replace(/\//g, '-');
+  const filename = 'floor-' + floor + '-' + date + '.json';
+
+  if (navigator.share) {
+    const file = new File([blob], filename, { type: 'application/json' });
+    navigator.share({ files: [file], title: filename }).catch(() => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = filename; a.click();
+      URL.revokeObjectURL(url);
+    });
+  } else {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  }
+  showToast('📤 ' + floor + 'のデータを書き出しました');
+}
+
+function importFloorData(input, targetFloor) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      // 1日使用量を上書き
+      if (data.daily) {
+        localStorage.setItem('diaper_daily_' + targetFloor, JSON.stringify(data.daily));
+      }
+      // 居室データを該当フロアのみ上書き（他フロアは保持）
+      if (data.rooms) {
+        const all = {};
+        try { Object.assign(all, JSON.parse(localStorage.getItem('diaper_rooms') || '{}')); } catch(e) {}
+        // 既存の同フロアデータを削除して新データで上書き
+        Object.keys(all).forEach(k => { if (k.startsWith(targetFloor + '_')) delete all[k]; });
+        Object.assign(all, data.rooms);
+        localStorage.setItem('diaper_rooms', JSON.stringify(all));
+      }
+      // 画面を再描画
+      FLOORS.forEach(f => loadDailyUse(f));
+      buildCards();
+      syncInputsToState();
+      reflectRoomToDaily(true);
+      showToast('📥 ' + targetFloor + 'のデータを読み込みました！');
+    } catch(err) {
+      showToast('❌ ファイルが正しくありません');
+    }
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
 // --- エクスポート・インポート ---
 function exportData() {
-  const data = { version: 1, floors: {} };
+  const data = { version: 2, floors: {} };
   FLOORS.forEach(f => {
     data.floors[f] = {};
     products.forEach(p => {
       data.floors[f][p.id] = state[f][p.id].dailyUse;
     });
   });
+  // 居室データを追加
+  try { data.rooms = JSON.parse(localStorage.getItem('diaper_rooms') || '{}'); } catch(e) { data.rooms = {}; }
   const json = JSON.stringify(data, null, 2);
   const blob = new Blob([json], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -1680,10 +1760,15 @@ function importData(event) {
         products.forEach(p => { saveData[p.id] = state[f][p.id].dailyUse; });
         localStorage.setItem(saveKey(f), JSON.stringify(saveData));
       });
+      // 居室データも読み込み
+      if (data.rooms) {
+        localStorage.setItem('diaper_rooms', JSON.stringify(data.rooms));
+      }
       syncInputsToState();
+      reflectRoomToDaily(true);
       statusEl.style.display = '';
       statusEl.className = 'ok';
-      statusEl.textContent = '✓ 読み込み完了！1日使用量が復元されました。';
+      statusEl.textContent = '✓ 読み込み完了！使用量と居室データが復元されました。';
       showToast('📥 読み込み完了！');
     } catch(err) {
       statusEl.style.display = '';
