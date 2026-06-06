@@ -598,9 +598,12 @@ function updateCard(pid) {
   const afWrap = document.getElementById('af-wrap-'+pid);
   if (afEl && after !== null) {
     const isLow = stock > 0 && after < 0;
-    const bags = Math.floor(Math.max(0,after)/p.perBag);
-    const rem = Math.max(0,after)%p.perBag;
-    afEl.textContent = isLow ? '不足' : (bags>0||rem>0 ? bags+'袋'+rem+'枚' : '0枚');
+    const afBoxes = Math.floor(Math.max(0,after)/p.perBox);
+    const afBagsRem = Math.max(0,after)%p.perBox;
+    const afBags = Math.floor(afBagsRem/p.perBag);
+    let afDisp = isLow ? '不足' : ((afBoxes>0?afBoxes+'箱':'')+(afBags>0?afBags+'袋':''))||'0袋';
+    afEl.innerHTML = afDisp + '<div style="font-size:9px;color:#aaa;margin-top:1px">' + Math.round(Math.max(0,after)) + '枚</div>';
+    afEl.style.color = isLow ? '#e53935' : '#555';
     if (afWrap) afWrap.className = 'box-after' + (isLow ? ' low' : '');
   }
 
