@@ -854,11 +854,45 @@ function exportHistoryExcel() {
     rows.push(['', '', '', '', '', '', '']);
   });
 
+  // フロアごとにソート（同日同フロアをまとめる）
+  const sorted = [...history].sort((a,b) => {
+    const fd = (a.floor||'').localeCompare(b.floor||'');
+    return fd !== 0 ? fd : (a.week||'').localeCompare(b.week||'');
+  });
+
+  rows = [['日付','フロア','商品名','在庫箱数','在庫袋数','在庫枚数','注文箱数']];
+  sorted.forEach(h => {
+    (h.items||[]).forEach((item, i) => {
+      rows.push([
+        i === 0 ? (h.week||'') : '',
+        i === 0 ? (h.floor||'') : '',
+        item.name||'',
+        item.stockBoxes !== undefined ? item.stockBoxes : '',
+        item.stockBags !== undefined ? item.stockBags : '',
+        item.stock !== undefined ? item.stock : '',
+        item.qty||0
+      ]);
+    });
+    rows.push(['','','','','','','']);
+  });
+
   const ws = XLSX.utils.aoa_to_sheet(rows);
-  // 列幅設定
+
+  // 列幅設定（商品名6文字分=約9、数字列は6）
   ws['!cols'] = [
-    {wch:12},{wch:8},{wch:20},{wch:8},{wch:8},{wch:10},{wch:8}
+    {wch:11},{wch:5},{wch:9},{wch:6},{wch:6},{wch:8},{wch:6}
   ];
+
+  // 数字列（D〜G）を中央揃えに
+  const range = XLSX.utils.decode_range(ws['!ref']);
+  for (let R = 1; R <= range.e.r; R++) {
+    for (let C = 3; C <= 6; C++) {
+      const addr = XLSX.utils.encode_cell({r:R, c:C});
+      if (!ws[addr]) continue;
+      ws[addr].s = { alignment: { horizontal: 'center' } };
+    }
+  }
+
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, '注文履歴');
   const date = new Date().toLocaleDateString('ja-JP').replace(/\//g, '-');
