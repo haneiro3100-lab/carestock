@@ -834,13 +834,18 @@ function exportHistoryExcel() {
   const history = loadHistory();
   if (!history.length) { showToast('履歴がありません'); return; }
 
-  // フロアごとにソート
   const sorted = [...history].sort((a,b) => {
     const fd = (a.floor||'').localeCompare(b.floor||'');
     return fd !== 0 ? fd : (a.week||'').localeCompare(b.week||'');
   });
 
-  const rows = [['日付','フロア','商品名','在庫箱数','在庫袋数','在庫枚数','注文箱数']];
+  // 1行目：ヘッダー上段（在庫をD列でまとめ）
+  // 2行目：ヘッダー下段
+  const rows = [
+    ['日付','フロア','商品名','在庫','','注文箱数'],
+    ['','','','箱','袋','']
+  ];
+
   sorted.forEach(h => {
     (h.items||[]).forEach((item, i) => {
       rows.push([
@@ -849,22 +854,31 @@ function exportHistoryExcel() {
         item.name||'',
         item.stockBoxes !== undefined ? item.stockBoxes : '',
         item.stockBags !== undefined ? item.stockBags : '',
-        item.stock !== undefined ? item.stock : '',
         item.qty||0
       ]);
     });
-    rows.push(['','','','','','','']);
+    rows.push(['','','','','','']);
   });
 
   const ws = XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols'] = [{wch:11},{wch:5},{wch:9},{wch:6},{wch:6},{wch:8},{wch:6}];
 
+  // 列幅（全体的に狭く）
+  ws['!cols'] = [{wch:9},{wch:4},{wch:8},{wch:4},{wch:4},{wch:5}];
+
+  // D1:E1を結合（在庫ラベル）
+  ws['!merges'] = [{ s:{r:0,c:3}, e:{r:0,c:4} }];
+
+  // 中央揃え（数字列D〜F、3行目以降）
   const range = XLSX.utils.decode_range(ws['!ref']);
-  for (let R = 1; R <= range.e.r; R++) {
-    for (let C = 3; C <= 6; C++) {
+  for (let R = 0; R <= range.e.r; R++) {
+    for (let C = 0; C <= 5; C++) {
       const addr = XLSX.utils.encode_cell({r:R, c:C});
-      if (!ws[addr]) continue;
-      ws[addr].s = { alignment: { horizontal: 'center' } };
+      if (!ws[addr]) ws[addr] = {v:'', t:'s'};
+      if (!ws[addr].s) ws[addr].s = {};
+      // 数字列は中央揃え
+      if (C >= 3) {
+        ws[addr].s.alignment = { horizontal: 'center' };
+      }
     }
   }
 
@@ -874,6 +888,8 @@ function exportHistoryExcel() {
   XLSX.writeFile(wb, 'order-history-' + date + '.xlsx');
   showToast('📊 Excelファイルを書き出しました');
 }
+
+
 
 function showToast(msg) {
   const t = document.getElementById('toast');
