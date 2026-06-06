@@ -907,7 +907,7 @@ function reflectRoom(silent) {
     if (p.weeklyFixed === null) {
       state[floor][p.id].dailyUse = totals[p.id];
     } else {
-      const w = totals[p.id] * 3 + p.perBag;
+      const w = totals[p.id] * 4 + p.perBag;
       state[floor][p.id].weeklyOverride = w > 0 ? w : null;
     }
   });
