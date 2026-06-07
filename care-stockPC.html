@@ -811,8 +811,8 @@ function renderHistory() {
   // 日付でソート（新しい順）
   const sorted = [...floorHist].sort((a,b) => (b.week||'').localeCompare(a.week||''));
 
-  // 商品リスト
-  const prods = products.filter(p => !p.special);
+  // 商品リスト（吸水シート含む全商品）
+  const prods = products;
 
   let html = '<div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:11px;min-width:100%">';
   // ヘッダー行：商品名 + 日付列
@@ -824,17 +824,30 @@ function renderHistory() {
   });
   html += '</tr>';
 
-  // 商品ごとの行
-  prods.forEach(p => {
-    html += '<tr style="border-bottom:1px solid #eee">';
-    html += '<td style="padding:4px 8px;font-weight:700;white-space:nowrap">' + (p.short||p.name) + '</td>';
-    sorted.forEach(h => {
-      const item = (h.items||[]).find(i => i.id === p.id);
-      const qty = item ? (item.qty || 0) : 0;
-      const color = qty > 0 ? '#e65100' : '#bbb';
-      html += '<td style="padding:4px 8px;text-align:center;color:' + color + ';font-weight:' + (qty>0?'800':'400') + '">' + qty + '</td>';
+  // カテゴリ別に商品を追加
+  const cats = [
+    { key: 'pad', label: 'パッド類', includeSpecial: false },
+    { key: 'tape', label: 'テープ止め', includeSpecial: true },
+    { key: 'pants', label: 'リハパン', includeSpecial: false }
+  ];
+  cats.forEach(cat => {
+    const catProds = cat.includeSpecial
+      ? products.filter(p => p.cat === cat.key || p.special)
+      : products.filter(p => p.cat === cat.key);
+    if (!catProds.length) return;
+    // カテゴリ見出し行
+    html += '<tr style="background:#e8f5e9"><td colspan="' + (sorted.length+1) + '" style="padding:3px 8px;font-size:10px;font-weight:800;color:#2a7a2a">' + cat.label + '</td></tr>';
+    catProds.forEach(p => {
+      html += '<tr style="border-bottom:1px solid #eee">';
+      html += '<td style="padding:4px 8px;font-weight:700;white-space:nowrap">' + (p.short||p.name) + '</td>';
+      sorted.forEach(h => {
+        const item = (h.items||[]).find(i => i.id === p.id);
+        const qty = item !== undefined ? (item.qty || 0) : 0;
+        const color = qty > 0 ? '#e65100' : '#bbb';
+        html += '<td style="padding:4px 8px;text-align:center;color:' + color + ';font-weight:' + (qty>0?'800':'400') + '">' + qty + '</td>';
+      });
+      html += '</tr>';
     });
-    html += '</tr>';
   });
 
   html += '</table></div>';
@@ -984,14 +997,27 @@ function exportHistoryExcel() {
   // ヘッダー行：商品名 + 日付列
   const rows = [['商品', ...sorted.map(h => h.week||'')]];
 
-  // 商品ごとの行
-  prods.forEach(p => {
-    const row = [p.short||p.name];
-    sorted.forEach(h => {
-      const item = (h.items||[]).find(i => i.id === p.id);
-      row.push(item ? (item.qty || 0) : 0);
+  // カテゴリ別に商品を追加
+  const cats = [
+    { key: 'pad', label: '【パッド類】' },
+    { key: 'tape', label: '【テープ止め】', includeSpecial: true },
+    { key: 'pants', label: '【リハパン】' }
+  ];
+  cats.forEach(cat => {
+    const catProds = cat.includeSpecial
+      ? products.filter(p => p.cat === cat.key || p.special)
+      : products.filter(p => p.cat === cat.key);
+    if (!catProds.length) return;
+    // カテゴリ行
+    rows.push([cat.label, ...sorted.map(() => '')]);
+    catProds.forEach(p => {
+      const row = [p.short||p.name];
+      sorted.forEach(h => {
+        const item = (h.items||[]).find(i => i.id === p.id);
+        row.push(item !== undefined ? (item.qty || 0) : 0);
+      });
+      rows.push(row);
     });
-    rows.push(row);
   });
 
   const ws = XLSX.utils.aoa_to_sheet(rows);
