@@ -19,39 +19,33 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-ser
   font-size: 12px; font-weight: 700; font-family: inherit; background: #f0f0f0; color: #333; }
 .btn-mode.admin { background: #ffe082; color: #5a3a00; }
 
-#layout { display: grid; grid-template-columns: 190px 1fr 350px; min-height: calc(100vh - 40px); }
+#layout { display: grid; grid-template-columns: 190px 1fr 350px; min-height: 100vh; }
 
 /* サイドバー */
 #sidebar {
-  background: #c8e6c9; border-right: 2px solid #a5d6a7;
-  padding: 14px 10px; position: sticky; top: 40px;
-  height: calc(100vh - 40px); overflow-y: auto;
+  background: #f5f5f5; border-right: 2px solid #e0e0e0;
+  padding: 14px 10px; position: sticky; top: 0;
+  height: calc(100vh); overflow-y: auto;
   display: flex; flex-direction: column; gap: 10px;
 }
 .sb-title { font-size: 11px; font-weight: 700; color: #2a4a2a; margin-bottom: 4px; }
 .floor-btn {
-  width: 100%; padding: 10px; border-radius: 8px; border: none;
-  font-size: 20px; font-weight: 800; cursor: pointer; font-family: inherit;
-  background: #ddd; color: #555; margin-bottom: 5px;
-  position: relative; text-align: center;
+  width: 100%; padding: 8px; border-radius: 8px; border: 2px solid #a5d6a7;
+  font-size: 18px; font-weight: 800; cursor: pointer; font-family: inherit;
+  background: #fff; color: #888; margin-bottom: 5px;
+  text-align: center;
 }
-.floor-btn::before {
-  content: "";
-  position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
-  font-size: 20px;
-}
-.floor-btn.active::before { content: "▶"; }
-.floor-btn.active { background: #f5d800; color: #333; }
+.floor-btn.active { background: #2e7d32; color: #fff; border-color: #2e7d32; }
 .cat-btn {
   width: 100%; padding: 8px; border-radius: 8px;
-  border: 2px solid rgba(0,0,0,0.2); font-size: 13px; font-weight: 800;
-  cursor: pointer; font-family: inherit; background: rgba(255,255,255,0.3);
-  color: #1a1a1a; margin-bottom: 5px; text-align: center;
+  border: 2px solid #90caf9; font-size: 13px; font-weight: 800;
+  cursor: pointer; font-family: inherit; background: #fff;
+  color: #555; margin-bottom: 5px; text-align: center;
 }
-.cat-btn.ap { background: #f5d800; border-color: #c8a000; }
-.cat-btn.at { background: #4fc3f7; border-color: #0288d1; }
-.cat-btn.an { background: #ce93d8; border-color: #8e24aa; }
-.cat-btn.ar { background: #80cbc4; border-color: #00897b; }
+.cat-btn.ap { background: #1565c0; color: #fff; border-color: #1565c0; }
+.cat-btn.at { background: #1565c0; color: #fff; border-color: #1565c0; }
+.cat-btn.an { background: #1565c0; color: #fff; border-color: #1565c0; }
+.cat-btn.ar { background: #1565c0; color: #fff; border-color: #1565c0; }
 .admin-tool { display: none; }
 .admin-tool.show { display: block; }
 .sb-tool-btn {
@@ -60,7 +54,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-ser
 }
 
 /* 中央 */
-#main-area { padding: 14px; overflow-y: auto; background: #f8fdf8; height: calc(100vh - 40px); }
+#main-area { padding: 14px; overflow-y: auto; background: #f8fdf8; height: 100vh; }
 .card {
   background: #fff; border-radius: 12px; margin-bottom: 12px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.08); overflow: hidden;
@@ -120,8 +114,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-ser
 /* 右パネル */
 #right-panel {
   background: #fff; border-left: 2px solid #a5d6a7;
-  padding: 14px; position: sticky; top: 40px;
-  height: calc(100vh - 40px); overflow-y: auto;
+  padding: 14px; position: sticky; top: 0;
+  height: calc(100vh); overflow-y: auto;
   display: flex; flex-direction: column; gap: 10px;
 }
 .panel-title { font-size: 13px; font-weight: 700; color: #2a4a2a; margin-bottom: 6px; }
@@ -157,37 +151,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-ser
 #toast.show { opacity: 1; }
 
 
-/* ステップバー */
-#step-bar {
-  display: flex; align-items: stretch;
-  background: #e3f0fb; border-bottom: 2px solid #90caf9;
-  padding: 0; gap: 0; font-family: inherit;
-  position: sticky; top: 0; z-index: 99;
-}
-.step-item {
-  flex: 1; display: flex; align-items: center; justify-content: center;
-  gap: 8px; padding: 9px 12px;
-  font-size: 20px; font-weight: 700; color: #1565c0;
-  border-right: 1px solid #90caf9;
-  position: relative; cursor: default;
-}
-.step-item:last-child { border-right: none; }
-.step-num {
-  width: 26px; height: 26px; border-radius: 50%;
-  background: #fff; color: #222;
-  border: 2px solid #333;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 13px; font-weight: 800; flex-shrink: 0;
-}
-.step-item.active { background: #bbdefb; color: #0d47a1; }
-.step-item.done { color: #42a5f5; }
-.step-arrow {
-  position: absolute; right: -10px; top: 50%; transform: translateY(-50%);
-  width: 0; height: 0;
-  border-top: 10px solid transparent; border-bottom: 10px solid transparent;
-  border-left: 10px solid #90caf9; z-index: 1;
-}
-.step-item.active .step-arrow { border-left-color: #64b5f6; }
+
+
 
 .holiday-banner { display: none; background: #ffebee; color: #c62828;
   padding: 7px; font-size: 12px; font-weight: 700; text-align: center;
@@ -215,41 +180,23 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-ser
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
-
-
-<div id="step-bar">
-  <div class="step-item active" id="step1">
-    <span class="step-num">1</span>
-    <span>在庫を入力</span>
-    <span class="step-arrow"></span>
-  </div>
-  <div class="step-item active" id="step2">
-    <span class="step-num">2</span>
-    <span>注文箱数を入力</span>
-    <span class="step-arrow"></span>
-  </div>
-  <div class="step-item active" id="step3">
-    <span class="step-num">3</span>
-    <span>内容を確認して確定</span>
-  </div>
-</div>
 <div class="holiday-banner" id="hol-banner">🏖 連休モード：14日分で計算中</div>
 
 <div id="layout">
   <div id="sidebar">
     <!-- モード表示 -->
-    <div id="mode-display" style="background:#fff3e0;border:2px solid #e65100;border-radius:10px;padding:10px;text-align:center;margin-bottom:4px">
-      <div style="font-size:10px;color:#888;margin-bottom:2px">現在のモード</div>
-      <div id="mode-label" style="font-size:20px;font-weight:800;color:#e65100">📋 注文シート</div>
+    <div id="mode-display" style="background:#fff3e0;border:1px solid #e65100;border-radius:6px;padding:4px 8px;text-align:center;margin-bottom:4px;display:flex;align-items:center;justify-content:center;gap:4px">
+      <span style="font-size:9px;color:#888">モード：</span>
+      <span id="mode-label" style="font-size:12px;font-weight:800;color:#e65100">📋 注文シート</span>
     </div>
     <div>
-      <div class="sb-title">フロア切り替え</div>
+      <div class="sb-title" style="font-size:20px;color:#2a4a2a;font-weight:700;margin-bottom:4px">フロア切り替え</div>
       <button class="floor-btn active" id="fb-2F" onclick="switchFloor('2F',this)">2階</button>
       <button class="floor-btn" id="fb-3F" onclick="switchFloor('3F',this)">3階</button>
     </div>
+    <div style="height:25px"></div>
     <div>
-      <div id="room-reflect-label" style="font-size:10px;font-weight:700;color:#2a7a2a;background:#e8f5e9;border-radius:6px;padding:4px 8px;text-align:center;display:none">✅ 居室管理を反映済み</div>
-      <div class="sb-title">カテゴリー切り替え</div>
+      <div class="sb-title" style="font-size:18px;color:#1565c0;padding:4px 0;">カテゴリー切り替え</div>
       <button class="cat-btn ap" id="cb-pad" onclick="switchCat('pad',this)" data-label="パッド類">▶     パッド類</button>
       <button class="cat-btn" id="cb-pants" onclick="switchCat('pants',this)" data-label="リハパン">リハパン</button>
       <button class="cat-btn" id="cb-tape" onclick="switchCat('tape',this)" data-label="テープ止め">テープ止め</button>
@@ -295,6 +242,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-ser
     </div>
     <!-- モード切替ボタン（左下） -->
     <div style="margin-top:auto;padding-top:10px">
+      <div id="room-reflect-label" style="font-size:10px;font-weight:700;color:#2a7a2a;background:#e8f5e9;border-radius:6px;padding:4px 8px;text-align:center;display:none;margin-bottom:6px">✅ 居室管理を反映済み</div>
       <button class="btn-mode" id="mode-btn" onclick="toggleMode()"
         style="width:100%;padding:3px;border-radius:6px;border:1px solid #ddd;background:#f9f9f9;color:#aaa;font-size:9px;font-weight:600;cursor:pointer;font-family:inherit">
         ⚙️ 管理者モードに切り替え
@@ -315,7 +263,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-ser
 
   <div id="right-panel">
     <div>
-      <div style="font-size:13px;font-weight:800;color:#1a6a2a;margin-bottom:4px;display:flex;align-items:center;gap:6px"><span style="background:#fff;color:#222;border:2px solid #333;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:800">3</span>内容を確認して確定</div><div class="panel-title" style="font-size:23px">📋 今週の注文内容</div>
+      <div style="font-size:13px;font-weight:800;color:#1a6a2a;margin-bottom:4px;display:flex;align-items:center;gap:6px"><span style="font-size:20px;background:#fff;color:#1565c0;border:2px solid #1565c0;border-radius:50%;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:800">3</span>内容を確認して確定</div><div class="panel-title" style="font-size:23px">📋 今週の注文内容</div>
       <div id="summary"></div>
     </div>
     <div id="grp-totals"></div>
@@ -613,7 +561,7 @@ function setOrderWeeks(n) {
 }
 
 
-function updateStep() {}
+
 
 function onInput(pid, field, val) {
   const num = Math.max(0, parseInt(val) || 0);
@@ -678,7 +626,7 @@ function buildCards() {
       + '<span class="badge badge-box">📦 1箱=' + Math.round(p.perBox/p.perBag) + '袋(' + p.perBox + '枚)</span>'
       + '<span class="badge badge-bag">🛍 1袋=' + p.perBag + '枚</span></div>'
       + '<div class="card-body">'
-      + '<div style="font-size:18px;font-weight:800;color:#2a6a3a;margin-bottom:14px;padding:6px 16px;background:#fff;border:2.5px solid #4a7c59;border-radius:8px;display:inline-block;letter-spacing:1px;box-shadow:0 2px 6px rgba(74,124,89,0.15)"><span style="font-size:14px;background:#fff;color:#222;border:2px solid #333;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;margin-right:6px;flex-shrink:0;font-weight:800">1</span>現在の在庫入力</div>'
+      + '<div style="font-size:18px;font-weight:800;color:#2a6a3a;margin-bottom:14px;padding:6px 16px;background:#fff;border:2.5px solid #4a7c59;border-radius:8px;display:inline-block;letter-spacing:1px;box-shadow:0 2px 6px rgba(74,124,89,0.15)"><span style="font-size:20px;background:#fff;color:#1565c0;border:2px solid #1565c0;border-radius:50%;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;margin-right:6px;flex-shrink:0;font-weight:800">1</span>現在の在庫入力</div>'
       + '<div class="stock-grid">'
       + '<div><div class="stock-lbl" style="color:#a07000">📦 箱数</div>'
       + '<input type="number" class="stock-in si-box" min="0" value="' + (s.stockBoxes||'') + '" placeholder="0" oninput="onInput(' + p.id + ',\'stockBoxes\',this.value)"></div>'
@@ -691,7 +639,7 @@ function buildCards() {
       + '<span style="font-size:10px;color:#aaa">枚</span></div>'
       + bottomRow
       + '<div style="margin-top:8px">'
-      + '<div style="font-size:25px;font-weight:700;color:#c62828"><span style="font-size:16px;background:#fff;color:#222;border:2px solid #333;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;margin-right:6px;vertical-align:middle;flex-shrink:0;font-weight:800">2</span>注文箱数 <span class="sug-lbl" id="sug-' + p.id + '">' + (sug>0?'推奨 : '+sug+' 箱':'') + '</span></div>'
+      + '<div style="font-size:25px;font-weight:700;color:#c62828"><span style="font-size:20px;background:#fff;color:#1565c0;border:2px solid #1565c0;border-radius:50%;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;margin-right:6px;vertical-align:middle;flex-shrink:0;font-weight:800">2</span>注文箱数 <span class="sug-lbl" id="sug-' + p.id + '">' + (sug>0?'推奨 : '+sug+' 箱':'') + '</span></div>'
       + '<input type="number" class="order-in" min="0" value="' + (s.orderQty||'') + '" placeholder="0" oninput="onInput(' + p.id + ',\'orderQty\',this.value)"></div>'
       + '</div></div>';
   }).join('');
