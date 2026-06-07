@@ -683,8 +683,23 @@ function updateCard(pid) {
   if (sunEl && !p.special) {
     const sunStock = calcSundayStock(p);
     const sunLow = sunStock < 0;
-    sunEl.textContent = sunLow ? '不足 (' + Math.round(sunStock) + '枚)' : Math.round(sunStock) + '枚';
-    sunEl.style.color = sunLow ? '#e53935' : '#aaa';
+    if (sunLow) {
+      sunEl.textContent = '不足 (' + Math.round(sunStock) + '枚)';
+      sunEl.style.color = '#e53935';
+    } else {
+      const sunBoxes = Math.floor(sunStock / p.perBox);
+      const sunBagsRem = sunStock % p.perBox;
+      const sunBags = Math.floor(sunBagsRem / p.perBag);
+      const sunPcs = Math.round(sunStock);
+      let disp = '';
+      if (sunBoxes > 0) disp += sunBoxes + '箱';
+      if (sunBags > 0) disp += sunBags + '袋';
+      if (!disp) disp = '0袋';
+      disp += '(' + sunPcs + '枚)';
+      sunEl.textContent = disp;
+      sunEl.style.color = '#aaa';
+    }
+    sunEl.style.fontSize = '10px';
   }
 
   updateSummary();
