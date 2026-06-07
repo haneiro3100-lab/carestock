@@ -119,7 +119,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-ser
   display: flex; flex-direction: column;
 }
 #right-panel-scroll {
-  flex: 1; overflow-y: auto; padding: 14px 14px 0 14px;
+  flex: 1; min-height: 0; overflow-y: auto; padding: 14px 14px 0 14px;
   display: flex; flex-direction: column; gap: 10px;
 }
 #right-panel-bottom {
@@ -596,8 +596,8 @@ function colorHex(c) {
 
 function buildCards() {
   const list = cat==='pad' ? products.filter(p=>p.cat==='pad') :
-               cat==='tape' ? [...products.filter(p=>p.cat==='tape'), ...products.filter(p=>p.special)] :
-               cat==='pants' ? products.filter(p=>p.cat==='pants') : [];
+               cat==='tape' ? products.filter(p=>p.cat==='tape') :
+               cat==='pants' ? products.filter(p=>p.cat==='pants'&&!p.special) : [];
 
   document.getElementById('cards').innerHTML = list.map(p => {
     const s = state[floor][p.id];
@@ -760,6 +760,9 @@ function updateSummary() {
   totEl.innerHTML = `
     <div class="grp-total"><span class="grp-total-lbl">パッド計</span>${padTot}箱</div>
     <div class="grp-total"><span class="grp-total-lbl">テープ・リハパン計</span>${tapePantsTot}箱</div>`;
+  // 最新の注文内容が見えるよう一番下にスクロール
+  const scrollEl = document.getElementById('right-panel-scroll');
+  if (scrollEl) scrollEl.scrollTop = scrollEl.scrollHeight;
 }
 
 function saveDaily() {
