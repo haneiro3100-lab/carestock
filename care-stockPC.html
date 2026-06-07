@@ -597,14 +597,14 @@ function buildCards() {
       const weeklyInput = isAdmin ? '<input type="number" class="weekly-in" placeholder="変更（空=リセット）" value="' + (custom&&custom>0?custom:'') + '" oninput="updateWeeklyFixed(' + p.id + ',this.value);updateCard(' + p.id + ')">' : '';
       const weeklySection = '<div><div class="info-lbl">' + (isAdmin ? '週必要枚数' : '') + '</div>'
         + (isAdmin ? '<div class="box-weekly" id="wk-wrap-' + p.id + '" style="' + ovStyle + '"><div class="info-val" id="wk-' + p.id + '">' + wn + '枚</div>' + ovLabel + '</div>' + weeklyInput : '') + '</div>';
-      const afTapeHtml = isAdmin ? '<div class="info-lbl" style="color:#bbb">木曜届く前の残り</div><div class="box-after" id="af-wrap-' + p.id + '"><div class="info-val" id="af-' + p.id + '" style="font-size:12px">-</div></div>' : '';
+      const afTapeHtml = isAdmin ? '<div class="info-lbl" style="color:#bbb;font-size:12px">木曜届く前の残り</div><div class="box-after" id="af-wrap-' + p.id + '"><div class="info-val" id="af-' + p.id + '" style="font-size:12px">-</div></div>' : '';
             bottomRow = '<div class="row2">'
         + weeklySection
         + '<div>' + afTapeHtml + '</div></div>'
 ;
     } else {
       const dailyInput = isAdmin ? '<div class="info-lbl">1日使用量</div><input type="number" class="daily-in" value="' + (s.dailyUse||'') + '" placeholder="0" oninput="onInput(' + p.id + ',\'dailyUse\',this.value)">' : '';
-      const afHtml = isAdmin ? '<div class="info-lbl" style="color:#bbb">木曜届く前の残り</div><div class="box-after" id="af-wrap-' + p.id + '"><div class="info-val" id="af-' + p.id + '" style="font-size:12px">-</div></div>' : '';
+      const afHtml = isAdmin ? '<div class="info-lbl" style="color:#bbb;font-size:12px">木曜届く前の残り</div><div class="box-after" id="af-wrap-' + p.id + '"><div class="info-val" id="af-' + p.id + '" style="font-size:12px">-</div></div>' : '';
             bottomRow = '<div class="row2">'
         + '<div>' + dailyInput + '</div>'
         + '<div>' + afHtml + '</div></div>'
@@ -634,7 +634,7 @@ function buildCards() {
       + '<div style="margin-top:8px">'
       + '<div style="font-size:25px;font-weight:700;color:#c62828"><span style="font-size:20px;background:#fff;color:#1565c0;border:2px solid #1565c0;border-radius:50%;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;margin-right:6px;vertical-align:middle;flex-shrink:0;font-weight:800">2</span>注文箱数 <span class="sug-lbl" id="sug-' + p.id + '">' + (sug>0?'推奨 : '+sug+' 箱':'') + '</span></div>'
       + '<input type="number" class="order-in" min="0" value="' + (s.orderQty||'') + '" placeholder="0" oninput="onInput(' + p.id + ',\'orderQty\',this.value)">'
-      + '<div style="text-align:right;padding-right:4px;margin-top:2px"><span style="font-size:10px;color:#aaa">来週日曜在庫予想：</span><span id="sun-' + p.id + '" style="font-size:15px;color:#aaa;font-weight:700">-</span></div>'
+      + '<div style="text-align:right;padding-right:4px;margin-top:2px"><span style="font-size:10px;color:#aaa">来週日曜在庫予想：</span><span id="sun-' + p.id + '" style="font-size:15px!important;color:#aaa;font-weight:700">-</span></div>'
       + '</div></div>';
   }).join('');
 
@@ -700,7 +700,8 @@ function updateCard(pid) {
       sunEl.textContent = disp;
       sunEl.style.color = '#aaa';
     }
-    sunEl.style.fontSize = '10px';
+    sunEl.style.setProperty('font-size', '15px', 'important');
+    sunEl.style.fontWeight = '700';
   }
 
   updateSummary();
@@ -1146,8 +1147,7 @@ function getPrevSunHtml(pid, p) {
     const rem = Math.max(0,val)%p.perBox;
     const bags = Math.floor(rem/p.perBag);
     const disp = val < 0 ? '不足' : ((boxes>0?boxes+'箱':'')+(bags>0?bags+'袋':'')+'('+val+'枚)');
-    return '<div class="info-lbl" style="color:#bbb;margin-top:4px">前回予想（' + r.date + '）</div>'
-         + '<div class="box-after"><div class="info-val" style="font-size:14px">' + disp + '</div></div>';
+    return '<div class="info-lbl" style="color:#bbb;margin-top:4px;font-size:12px">前回予想（' + r.date + '）： ' + disp + '</div>';
   } catch(e) { return ''; }
 }
 
