@@ -402,6 +402,7 @@ let floor = '2F';
 let cat = 'pad';
 let isAdmin = false;
 let isHoliday = false;
+let orderWeeks = 2; // 連休時の注文週数
 let state = {};
 
 // ===== 初期化 =====
@@ -426,7 +427,7 @@ function totalStock(p) {
   const s = state[floor][p.id];
   return s.stockBoxes * p.perBox + s.stockBags * p.perBag;
 }
-function getDays() { return isHoliday ? 14 : 7; }
+function getDays() { return isHoliday ? orderWeeks * 7 : 7; }
 function weeklyNeed(p) {
   if (p.weeklyFixed !== null) {
     const ov = state[floor][p.id].weeklyOverride;
@@ -549,6 +550,23 @@ function toggleHoliday() {
   isHoliday = !isHoliday;
   document.getElementById('hol-banner').classList.toggle('show', isHoliday);
   document.getElementById('hol-btn').style.background = isHoliday ? '#ffebee' : '#fff8f0';
+  document.getElementById('hol-btn').style.borderColor = isHoliday ? '#e53935' : '#ff8f00';
+  document.getElementById('hol-weeks-ui').style.display = isHoliday ? 'block' : 'none';
+  if (isHoliday) setOrderWeeks(orderWeeks);
+  buildCards(); updateSummary();
+}
+
+function setOrderWeeks(n) {
+  orderWeeks = n;
+  [1,2,3,4].forEach(i => {
+    const btn = document.getElementById('wk-btn-' + i);
+    if (btn) {
+      btn.style.border = i === n ? '1px solid #ff8f00' : '1px solid #ddd';
+      btn.style.background = i === n ? '#fff3e0' : '#f5f5f5';
+      btn.style.fontWeight = i === n ? '700' : '400';
+    }
+  });
+  document.getElementById('hol-banner').textContent = '🏖 連休モード：' + (n * 7) + '日分（' + n + '週）で計算中';
   buildCards(); updateSummary();
 }
 
@@ -1163,7 +1181,7 @@ function renderSunHist() {
   });
   html += '</tr>';
 
-  products.filter(p => !p.special).forEach(p => {
+  products.forEach(p => {
     const hasData = hist.some(h => h.items && h.items[p.id] !== undefined);
     if (!hasData) return;
     html += '<tr style="border-bottom:1px solid #eee">';
