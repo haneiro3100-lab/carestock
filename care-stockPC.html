@@ -218,8 +218,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-ser
       <div id="room-reflect-label" style="font-size:10px;font-weight:700;color:#2a7a2a;background:#e8f5e9;border-radius:6px;padding:4px 8px;text-align:center;display:none">✅ 居室管理を反映済み</div>
       <div class="sb-title">カテゴリー切り替え</div>
       <button class="cat-btn ap" id="cb-pad" onclick="switchCat('pad',this)" data-label="パッド類">▶     パッド類</button>
-      <button class="cat-btn" id="cb-tape" onclick="switchCat('tape',this)" data-label="テープ止め">テープ止め</button>
       <button class="cat-btn" id="cb-pants" onclick="switchCat('pants',this)" data-label="リハパン">リハパン</button>
+      <button class="cat-btn" id="cb-tape" onclick="switchCat('tape',this)" data-label="テープ止め">テープ止め</button>
       <button class="cat-btn admin-tool" id="cb-room" onclick="switchCat('room',this)" data-label="居室管理">居室管理</button>
     </div>
     <div class="admin-tool" id="admin-tools">
@@ -567,7 +567,7 @@ function colorHex(c) {
 
 function buildCards() {
   const list = cat==='pad' ? products.filter(p=>p.cat==='pad') :
-               cat==='tape' ? products.filter(p=>p.cat==='tape') :
+               cat==='tape' ? [...products.filter(p=>p.cat==='tape'), ...products.filter(p=>p.special)] :
                cat==='pants' ? products.filter(p=>p.cat==='pants') : [];
 
   document.getElementById('cards').innerHTML = list.map(p => {
@@ -738,15 +738,12 @@ function saveDaily() {
 }
 
 function confirmOrder() {
-  const items = products.filter(p => state[floor][p.id].orderQty > 0)
-    .map(p => ({
-      name: p.short||p.name,
-      qty: state[floor][p.id].orderQty,
-      stockBoxes: state[floor][p.id].stockBoxes,
-      stockBags: state[floor][p.id].stockBags,
-      stock: state[floor][p.id].stockBoxes * p.perBox + state[floor][p.id].stockBags * p.perBag,
-      sunStock: Math.round(calcSundayStock(p))
-    }));
+  // 全商品の注文箱数を記録（0含む）
+  const items = products.filter(p => !p.special).map(p => ({
+    id: p.id,
+    name: p.short||p.name,
+    qty: state[floor][p.id].orderQty || 0
+  }));
   if (!items.length) { showToast('注文箱数を入力してください'); return; }
   const history = loadHistory();
   history.unshift({ week: new Date().toLocaleDateString('ja-JP'), floor, items });
@@ -783,72 +780,44 @@ function renderHistory() {
     return;
   }
 
-  // 前週の日付範囲を計算（日曜基準）
-  const now = new Date();
-  const dayOfWeek = now.getDay(); // 0=日
-  const lastSun = new Date(now); lastSun.setDate(now.getDate() - dayOfWeek - 7);
-  const prevSun = new Date(now); prevSun.setDate(now.getDate() - dayOfWeek);
-  const prevWeekKey = lastSun.getFullYear() + '/' +
-    String(lastSun.getMonth()+1).padStart(2,'0') + '/' +
-    String(lastSun.getDate()).padStart(2,'0');
-
-  // 月ごとにグループ化
-  const monthGroups = {};
-  let prevWeekEntries = [];
-
-  history.forEach(h => {
-    const dateStr = h.week || '';
-    const parts = dateStr.split('/');
-    const monthKey = parts.length >= 2 ? parts[0] + '/' + parts[1].padStart(2,'0') : '不明';
-
-    // 前週判定（日付が前週の日曜と一致）
-    if (dateStr === prevWeekKey) {
-      prevWeekEntries.push(h);
-    } else {
-      if (!monthGroups[monthKey]) monthGroups[monthKey] = [];
-      monthGroups[monthKey].push(h);
-    }
-  });
-
-  const entryHtml = (h) => `<div style="margin-bottom:6px;padding:6px;background:#f9f9f9;border-radius:6px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-      <div style="font-weight:700;color:#2a4a2a;font-size:11px">${h.week} ${h.floor}</div>
-      <button onclick="deletePcHistory('${h.week}_${h.floor}')" style="padding:2px 6px;border:1px solid #ffaaaa;border-radius:4px;background:#fff5f5;color:#e53935;font-size:9px;cursor:pointer;font-family:inherit">削除</button>
-    </div>
-    ${(h.items||[]).map(i2=>`<div style="padding:3px 0;border-bottom:1px solid #f0f0f0;font-size:10px">
-      <span style="font-weight:700">${i2.name}</span>
-      <span style="color:#666;margin-left:6px">在庫 ${i2.stockBoxes||0}箱${i2.stockBags||0}袋</span>
-      <span style="color:#e65100;font-weight:800;margin-left:6px">注文 ${i2.qty}箱</span>
-    </div>`).join('')}
-  </div>`;
-
-  let html = '';
-
-  // 前週分を展開して表示
-  if (prevWeekEntries.length) {
-    html += `<div style="margin-bottom:6px;border:1px solid #a5d6a7;border-radius:8px;overflow:hidden">
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#e8f5e9;font-size:12px;font-weight:700;color:#2a4a2a">
-        <span>前週（${prevWeekKey}）${prevWeekEntries.length}件</span>
-      </div>
-      <div style="padding:6px 8px">${prevWeekEntries.map(entryHtml).join('')}</div>
-    </div>`;
+  // フロアでフィルタ
+  const floorHist = history.filter(h => h.floor === floor);
+  if (!floorHist.length) {
+    document.getElementById('history-content').innerHTML = '履歴なし';
+    return;
   }
 
-  // 月ごとに折りたたみ
-  const monthKeys = Object.keys(monthGroups).sort().reverse();
-  monthKeys.forEach(month => {
-    const entries = monthGroups[month];
-    html += `<div style="margin-bottom:6px;border:1px solid #ddd;border-radius:8px;overflow:hidden">
-      <div onclick="toggleHistMonth(this)" style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#f5f5f5;cursor:pointer;font-size:12px;font-weight:700;color:#2a4a2a">
-        <span>${month}（${entries.length}件）</span>
-        <span>▼</span>
-      </div>
-      <div style="display:none;padding:6px 8px">${entries.map(entryHtml).join('')}</div>
-    </div>`;
+  // 日付でソート（新しい順）
+  const sorted = [...floorHist].sort((a,b) => (b.week||'').localeCompare(a.week||''));
+
+  // 商品リスト
+  const prods = products.filter(p => !p.special);
+
+  let html = '<div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:11px;min-width:100%">';
+  // ヘッダー行：商品名 + 日付列
+  html += '<tr style="background:#f0f0f0"><th style="padding:4px 8px;text-align:left;white-space:nowrap">商品</th>';
+  sorted.forEach(h => {
+    html += '<th style="padding:4px 8px;text-align:center;white-space:nowrap">' + (h.week||'') + '</th>';
+  });
+  html += '</tr>';
+
+  // 商品ごとの行
+  prods.forEach(p => {
+    html += '<tr style="border-bottom:1px solid #eee">';
+    html += '<td style="padding:4px 8px;font-weight:700;white-space:nowrap">' + (p.short||p.name) + '</td>';
+    sorted.forEach(h => {
+      const item = (h.items||[]).find(i => i.id === p.id);
+      const qty = item ? (item.qty || 0) : 0;
+      const color = qty > 0 ? '#e65100' : '#bbb';
+      html += '<td style="padding:4px 8px;text-align:center;color:' + color + ';font-weight:' + (qty>0?'800':'400') + '">' + qty + '</td>';
+    });
+    html += '</tr>';
   });
 
+  html += '</table></div>';
   document.getElementById('history-content').innerHTML = html;
 }
+
 
 function toggleHistMonth(header) {
   const body = header.nextElementSibling;
@@ -983,61 +952,35 @@ function exportHistoryExcel() {
   const history = loadHistory();
   if (!history.length) { showToast('履歴がありません'); return; }
 
-  const sorted = [...history].sort((a,b) => {
-    const fd = (a.floor||'').localeCompare(b.floor||'');
-    return fd !== 0 ? fd : (a.week||'').localeCompare(b.week||'');
-  });
+  const floorHist = history.filter(h => h.floor === floor);
+  if (!floorHist.length) { showToast('このフロアの履歴がありません'); return; }
 
-  const rows = [];
-  sorted.forEach(h => {
-    // A1:日付、B1:空、C1:在庫（B1:C1結合）
-    rows.push([h.week||'', '', '在庫', '', '']);
-    // A2:フロア、B2:箱、C2:袋、D2:注文数
-    rows.push([h.floor||'', '箱', '袋', '注文数']);
-    // 3行目以降：商品データ
-    (h.items||[]).forEach(item => {
-      rows.push([
-        item.name||'',
-        item.stockBoxes !== undefined ? item.stockBoxes : '',
-        item.stockBags !== undefined ? item.stockBags : '',
-        item.qty||0
-      ]);
+  const sorted = [...floorHist].sort((a,b) => (a.week||'').localeCompare(b.week||''));
+  const prods = products.filter(p => !p.special);
+
+  // ヘッダー行：商品名 + 日付列
+  const rows = [['商品', ...sorted.map(h => h.week||'')]];
+
+  // 商品ごとの行
+  prods.forEach(p => {
+    const row = [p.short||p.name];
+    sorted.forEach(h => {
+      const item = (h.items||[]).find(i => i.id === p.id);
+      row.push(item ? (item.qty || 0) : 0);
     });
-    // 区切り空行
-    rows.push(['','','','']);
+    rows.push(row);
   });
 
   const ws = XLSX.utils.aoa_to_sheet(rows);
-
-  // 列幅
-  ws['!cols'] = [{wch:8},{wch:4},{wch:4},{wch:5}];
-
-  // 各グループのB1:C1を「在庫」で結合
-  const merges = [];
-  let rowIdx = 0;
-  sorted.forEach(h => {
-    merges.push({ s:{r:rowIdx,c:1}, e:{r:rowIdx,c:2} });
-    rowIdx += (h.items||[]).length + 3; // ヘッダー2行+データ+空行
-  });
-  ws['!merges'] = merges;
-
-  // 中央揃え（B列以降）
-  const range = XLSX.utils.decode_range(ws['!ref']);
-  for (let R = 0; R <= range.e.r; R++) {
-    for (let C = 1; C <= 3; C++) {
-      const addr = XLSX.utils.encode_cell({r:R, c:C});
-      if (!ws[addr]) ws[addr] = {v:'', t:'s'};
-      if (!ws[addr].s) ws[addr].s = {};
-      ws[addr].s.alignment = { horizontal: 'center' };
-    }
-  }
+  ws['!cols'] = [{wch:12}, ...sorted.map(() => ({wch:9}))];
 
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, '注文履歴');
+  XLSX.utils.book_append_sheet(wb, ws, '注文履歴_' + floor);
   const date = new Date().toLocaleDateString('ja-JP').replace(/\//g, '-');
-  XLSX.writeFile(wb, 'order-history-' + date + '.xlsx');
+  XLSX.writeFile(wb, 'order-history-' + floor + '-' + date + '.xlsx');
   showToast('📊 Excelファイルを書き出しました');
 }
+
 
 
 
