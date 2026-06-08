@@ -421,16 +421,6 @@
 <div class="holiday-banner" id="holiday-banner">🏖 連休モード：14日分で計算中</div>
 <div id="mode-banner" style="display:none"></div>
 
-<!-- 1日使用量 保存エリア -->
-<div class="save-bar admin-only">
-  <div class="save-info">
-    <strong id="save-floor-label">2階</strong> の1日使用量<br>
-    <span id="save-date-label" style="font-size:10px;color:#aaa;">未保存</span>
-  </div>
-  <button class="btn-save" onclick="saveDailyUse()">💾 使用量を保存</button>
-</div>
-
-
 <div id="order-confirm-popup" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:10000;align-items:center;justify-content:center">
   <div style="background:#fff;border-radius:14px;padding:20px;width:90vw;max-width:420px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.25)">
     <div style="font-size:18px;font-weight:900;color:#2e7d32;margin-bottom:12px;text-align:center;border-bottom:2px solid #a5d6a7;padding-bottom:8px">📋 注文内容の確認</div>
@@ -854,6 +844,7 @@ function buildCards() {
           <span style="font-size:11px;color:#888">枚</span>
         </div>
         <div class="bottom-row">
+
           <div class="bottom-col admin-only" id="daily-col-${p.id}" ${p.weeklyFixed !== null ? 'style="display:none"' : ''} data-weekly="${p.weeklyFixed !== null}">
             <div class="daily-label-row">
               <div class="daily-saved-dot" id="dot-${p.id}"></div>
@@ -1132,7 +1123,6 @@ function switchFloor(floor, btn) {
   } else {
     bannerEl.textContent = floorLabel(floor) + 'の在庫を入力中';
   }
-  document.getElementById("save-floor-label").textContent = floorLabel(floor);
   syncInputsToState();
   reflectRoomToDaily(true);  // フロア切替時も自動反映
   updateSaveDateLabel();
