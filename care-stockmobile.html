@@ -1135,7 +1135,7 @@ function doConfirmOrder(dateStr) {
   const sunHistKey = 'diaper_sun_hist_' + currentFloor;
   let sunHist = [];
   try { sunHist = JSON.parse(localStorage.getItem(sunHistKey) || '[]'); } catch(e) {}
-  const sameIdx = sunHist.findIndex(function(h) { return h.date === dateStr); }
+  const sameIdx = sunHist.findIndex(function(h) { return h.date === dateStr; })
   if (sameIdx >= 0) { sunHist[sameIdx] = sunRecord; } else { sunHist.unshift(sunRecord); if (sunHist.length > 4) sunHist = sunHist.slice(0, 4); }
   localStorage.setItem(sunHistKey, JSON.stringify(sunHist));
   localStorage.setItem('diaper_sun_record_' + currentFloor, JSON.stringify(sunRecord));
@@ -1208,7 +1208,7 @@ function renderHistory() {
 
 function deleteHistory(key) {
   const hist = loadHistory();
-  const newHist = hist.filter(function(h) { return (h.date + '_' + h.floor; }) !== key);
+  const newHist = hist.filter(function(h) { return (h.date + '_' + h.floor) !== key; });
   saveHistory(newHist);
   renderHistory();
 }
@@ -1628,7 +1628,7 @@ function toggleMode() {
     if (currentCat === 'room') {
       const padTab = document.querySelector('.tab');
       switchCat('pad', padTab);
-      document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'; }));
+      document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
       padTab.classList.add('active');
     }
   }
@@ -1766,7 +1766,7 @@ function exportFloorData(floor) {
 
   if (navigator.share) {
     const file = new File([blob], filename, { type: 'application/json' });
-    navigator.share({ files: [file], title: filename }).catchfunction(() {
+    navigator.share({ files: [file], title: filename }).catch(function() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a'); a.href = url; a.download = filename; a.click();
       URL.revokeObjectURL(url);
@@ -1790,7 +1790,7 @@ function importFloorData(input, targetFloor) {
       try { Object.assign(all, JSON.parse(localStorage.getItem('diaper_rooms') || '{}')); } catch(e2) {}
 
       // 古い形式：キーが「3F_301」のような居室データのみのJSON
-      const isOldFormat = Object.keys(data).some(function(k) { return /^[23]F_\d+$/.test(k; }));
+      const isOldFormat = Object.keys(data).some(function(k) { return /^[23]F_\d+$/.test(k); });
 
       if (isOldFormat) {
         // 古い形式：そのまま居室データとして読み込む
@@ -1861,7 +1861,7 @@ function importData(event) {
     try {
       const data = JSON.parse(e.target.result);
       // 古い居室データ形式（3F_301等のキー）の場合は居室データとして読み込む
-      const isOldRoomFormat = Object.keys(data).some(function(k) { return /^[23]F_\d+$/.test(k; }));
+      const isOldRoomFormat = Object.keys(data).some(function(k) { return /^[23]F_\d+$/.test(k); });
       if (isOldRoomFormat) {
         const all = {};
         try { Object.assign(all, JSON.parse(localStorage.getItem('diaper_rooms') || '{}')); } catch(e2) {}
