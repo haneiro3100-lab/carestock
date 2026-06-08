@@ -369,7 +369,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-ser
     </div>
     <!-- モード切替ボタン（左下） -->
     <div style="margin-top:auto;padding-top:10px">
-      <div id="room-reflect-label" style="font-size:10px;font-weight:700;color:#2a7a2a;background:#e8f5e9;border-radius:6px;padding:4px 8px;text-align:center;display:none;margin-bottom:6px">✅ 居室管理を反映済み</div>
+      <div id="room-reflect-label" style="font-size:10px;font-weight:700;color:#2a7a2a;background:#e8f5e9;border-radius:6px;padding:4px 8px;text-align:center;display:none;margin-top:20px">✅ 居室管理を反映済み</div>
       <button class="btn-mode" id="mode-btn" onclick="toggleMode()"
         style="width:100%;padding:3px;border-radius:6px;border:1px solid #ddd;background:#f9f9f9;color:#aaa;font-size:9px;font-weight:600;cursor:pointer;font-family:inherit">
         ⚙️ 管理者モードに切り替え
@@ -1159,7 +1159,7 @@ function reflectRoom(silent) {
   if (!silent) {
     showToast('✅ 居室合計を反映しました！');
     var now = new Date();
-    var dateStr = now.getFullYear() + '/' + (now.getMonth()+1) + '/' + now.getDate() + ' ' + now.getHours() + ':' + String(now.getMinutes()).padStart(2,'0');
+    var dateStr = (now.getMonth()+1) + '/' + now.getDate();
     localStorage.setItem('diaper_room_reflect_date_' + floor, dateStr);
     updateRoomReflectLabel();
   }
