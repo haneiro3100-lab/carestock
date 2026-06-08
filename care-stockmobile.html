@@ -591,7 +591,7 @@ function saveDailyUse() {
   localStorage.setItem(saveDateKey(currentFloor), now.toISOString());
   showToast("💾 " + floorLabel(currentFloor) + "の使用量を保存しました！");
   updateSaveDateLabel();
-  products.forEach(function(p) updateDailyBadge(p.id));
+  products.forEach(function(p) { updateDailyBadge(p.id); });
 }
 
 function updateSaveDateLabel() {
@@ -940,7 +940,7 @@ function onInput(pid, field, val) {
 function switchFloor(floor, btn) {
   currentFloor = floor;
   window.scrollTo({ top: 0, behavior: "smooth" });
-  document.querySelectorAll(".floor-tab").forEach(function(t) t.classList.remove("active"));
+  document.querySelectorAll(".floor-tab").forEach(function(t) { t.classList.remove("active"); });
   btn.classList.add("active");
   var reflectDate = localStorage.getItem('diaper_room_reflect_date_' + floor) || '';
   var bannerEl = document.getElementById("floor-banner");
@@ -956,7 +956,7 @@ function switchFloor(floor, btn) {
   syncInputsToState();
   reflectRoomToDaily(true);  // フロア切替時も自動反映
   updateSaveDateLabel();
-  products.forEach(function(p) updatePrevBadge(p.id));
+  products.forEach(function(p) { updatePrevBadge(p.id); });
   renderHistory();
   updateWeeklyDisplay();
   if (currentCat === 'room') buildRoomSection();
@@ -1141,7 +1141,7 @@ function doConfirmOrder(dateStr) {
   localStorage.setItem('diaper_sun_record_' + currentFloor, JSON.stringify(sunRecord));
   showToast('✅ ' + floorLabel(currentFloor) + 'の注文を保存しました！');
   renderHistory();
-  products.forEach(function(p) updatePrevBadge(p.id));
+  products.forEach(function(p) { updatePrevBadge(p.id); });
   setTimeout(function() { window.scrollTo({ top: scrollY, behavior: 'instant' }); }, 50);
 }
 
@@ -1346,7 +1346,7 @@ function reflectRoomToDaily(silent) {
   });
   if (!silent) syncInputsToState();
   updateWeeklyDisplay();
-  products.forEach(function(p) updateCard(p.id));
+  products.forEach(function(p) { updateCard(p.id); });
   if (!silent) showToast('✅ 居室合計を使用量に反映しました！');
   var now = new Date();
   var dateStr = (now.getMonth()+1) + '/' + now.getDate();
@@ -1629,7 +1629,7 @@ function toggleMode() {
     if (currentCat === 'room') {
       const padTab = document.querySelector('.tab');
       switchCat('pad', padTab);
-      document.querySelectorAll('.tab').forEach(function(t) t.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'; }));
       padTab.classList.add('active');
     }
   }
@@ -1816,7 +1816,7 @@ function importFloorData(input, targetFloor) {
         }
       }
 
-      FLOORS.forEach(function(f) loadDailyUse(f));
+      FLOORS.forEach(function(f) { loadDailyUse(f); });
       buildCards();
       syncInputsToState();
       reflectRoomToDaily(true);
@@ -1924,11 +1924,11 @@ document.addEventListener('wheel', function(e) {
 }, { passive: true });
 
 // --- 初期化 ---
-FLOORS.forEach(function(f) loadDailyUse(f));
+FLOORS.forEach(function(f) { loadDailyUse(f); });
 buildCards();
 syncInputsToState();
 updateSaveDateLabel();
-products.forEach(function(p) updatePrevBadge(p.id));
+products.forEach(function(p) { updatePrevBadge(p.id); });
 renderHistory();
 updateWeeklyDisplay();
 reflectRoomToDaily(true);  // 居室管理を自動反映
