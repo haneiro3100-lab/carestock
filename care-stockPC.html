@@ -1116,12 +1116,34 @@ function cChange(rn, pid, d) {
   if (!rs.products) rs.products = {};
   rs.products[String(pid)] = { checked: v > 0, qty: v };
   setRoomState(floor, rn, rs);
-  // 変更時に自動で日時保存・反映
+  // 変更時に自動で日時保存・反映（buildCards不要の軽量版）
   var now = new Date();
   var dateStr = (now.getMonth()+1) + '/' + now.getDate();
   localStorage.setItem('diaper_room_reflect_date_' + floor, dateStr);
-  reflectRoom(true);
+  reflectRoomQuick();
   updateRoomReflectLabel();
+}
+
+function reflectRoomQuick() {
+  var totals = {};
+  products.forEach(function(p) { totals[p.id] = 0; });
+  (ROOMS[floor]||[]).forEach(function(rn) {
+    var rs = getRoomState(floor, rn);
+    products.forEach(function(p) {
+      var v = rs.products[String(p.id)];
+      if (v && v.qty > 0) totals[p.id] += parseInt(v.qty)||0;
+    });
+  });
+  products.forEach(function(p) {
+    if (p.weeklyFixed === null) {
+      state[floor][p.id].dailyUse = totals[p.id];
+    } else {
+      var w = totals[p.id] * 4 + p.perBag;
+      state[floor][p.id].weeklyOverride = w > 0 ? w : null;
+    }
+    updateCard(p.id);
+  });
+  updateSummary();
 }
 
 function updateRoomReflectLabel() {
