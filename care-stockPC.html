@@ -454,7 +454,7 @@ const products = [
   { id:14, cat:"pants", name:"フィットパンツ M〜L",   short:"M〜L", color:null,     abs:null,     perBox:66,  perBag:22,  weeklyFixed:0 },
   { id:15, cat:"pants", name:"フィットパンツ L〜LL",  short:"L〜LL", color:null,     abs:null,     perBox:60,  perBag:20,  weeklyFixed:0 },
   // 吸水シート（計算なし・在庫と注文数のみ）
-  { id:16, cat:"pants",  name:"吸水シート",              short:"吸水シート", color:null, abs:null,     perBox:576, perBag:72,  weeklyFixed:null, special:true, bagPerBox:8 },
+  { id:16, cat:"tape",  name:"吸水シート",              short:"吸水シート", color:null, abs:null,     perBox:576, perBag:72,  weeklyFixed:null, special:true, bagPerBox:8 },
 ];
 
 
@@ -715,7 +715,7 @@ function colorHexText(c) {
 function buildCards() {
   var list;
   if (cat==='pad') { list = products.filter(function(p){return p.cat==='pad';}); }
-  else if (cat==='tape') { list = products.filter(function(p){return p.cat==='tape';}).concat(products.filter(function(p){return p.special;})); }
+  else if (cat==='tape') { list = products.filter(function(p){return p.cat==='tape';}); }
   else if (cat==='pants') { list = products.filter(function(p){return p.cat==='pants'&&!p.special;}); }
   else { list = []; }
 
@@ -860,7 +860,7 @@ function updateSummary() {
     { label:'パッド類', list: products.filter(function(p){return p.cat==='pad'&&!p.special;}) },
     { label:'リハパン', list: products.filter(function(p){return p.cat==='pants'&&!p.special;}) },
     { label:'テープ止め', list: products.filter(function(p){return p.cat==='tape';}) },
-    { label:'その他', list: products.filter(function(p){return p.special;}) },
+
   ];
 
   groups.forEach(function(g) {
