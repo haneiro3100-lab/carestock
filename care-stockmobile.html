@@ -2088,23 +2088,26 @@ function importData(event) {
         event.target.value = '';
         return;
       }
-      if (!data.floors) throw new Error('形式が違います');
-      FLOORS.forEach(f => {
-        if (!data.floors[f]) return;
-        products.forEach(p => {
-          const val = data.floors[f][p.id];
-          if (val !== undefined) {
-            state[f][p.id].dailyUse = val;
-          }
+      // PC版新形式（data.all + data.daily_2F）にも対応
+      if (!data.floors && !data.daily_2F) throw new Error('形式が違います');
+      FLOORS.forEach(function(f) {
+        const daily = data['daily_'+f] || (data.floors && data.floors[f]) || null;
+        if (!daily) return;
+        products.forEach(function(p) {
+          const val = daily[p.id];
+          if (val !== undefined) state[f][p.id].dailyUse = val;
         });
-        // localStorageにも保存
         const saveData = {};
-        products.forEach(p => { saveData[p.id] = state[f][p.id].dailyUse; });
+        products.forEach(function(p) { saveData[p.id] = state[f][p.id].dailyUse; });
         localStorage.setItem(saveKey(f), JSON.stringify(saveData));
+        // 反映日付
+        const rd = data['reflectDate_'+f] || '';
+        if (rd) localStorage.setItem('diaper_room_reflect_date_' + f, rd);
       });
-      // 居室データも読み込み
-      if (data.rooms) {
-        localStorage.setItem('diaper_rooms', JSON.stringify(data.rooms));
+      // 居室データ（PC版はdata.all、スマホ版はdata.rooms）
+      const roomSrc = data.all || data.rooms || null;
+      if (roomSrc) {
+        localStorage.setItem('diaper_rooms', JSON.stringify(roomSrc));
       }
       syncInputsToState();
       reflectRoomToDaily(true);

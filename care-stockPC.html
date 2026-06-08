@@ -1266,19 +1266,28 @@ function importAllDataPc(input) {
   reader.onload = function(e) {
     try {
       const data = JSON.parse(e.target.result);
-      if (data.floors) {
-        ['2F','3F'].forEach(function(f) {
-          if (!data.floors[f]) return;
+      // 新形式: data.all + data.daily_2F + data.daily_3F
+      if (data.all) {
+        localStorage.setItem('diaper_rooms', JSON.stringify(data.all));
+      } else if (data.rooms) {
+        localStorage.setItem('diaper_rooms', JSON.stringify(data.rooms));
+      }
+      ['2F','3F'].forEach(function(f) {
+        // 1日使用量
+        const daily = data['daily_'+f] || (data.floors && data.floors[f]) || null;
+        if (daily) {
           products.forEach(function(p) {
-            const val = data.floors[f][p.id];
+            const val = daily[p.id];
             if (val !== undefined) state[f][p.id].dailyUse = val;
           });
           const saveData = {};
           products.forEach(function(p) { saveData[p.id] = state[f][p.id].dailyUse; });
           localStorage.setItem(SAVE_KEY(f), JSON.stringify(saveData));
-        });
-      }
-      if (data.rooms) localStorage.setItem('diaper_rooms', JSON.stringify(data.rooms));
+        }
+        // 反映日付
+        const rd = data['reflectDate_'+f] || '';
+        if (rd) localStorage.setItem('diaper_room_reflect_date_' + f, rd);
+      });
       reflectRoom(true); buildCards(); updateSummary(); updateRoomReflectLabel();
       showToast('📥 全データを読み込みました！');
     } catch(err) { showToast('❌ ファイルが正しくありません'); }
