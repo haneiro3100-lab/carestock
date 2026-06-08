@@ -858,8 +858,8 @@ function updateSummary() {
 
   const groups = [
     { label:'パッド類', list: products.filter(function(p){return p.cat==='pad'&&!p.special;}) },
-    { label:'テープ止め', list: products.filter(function(p){return p.cat==='tape';}) },
     { label:'リハパン', list: products.filter(function(p){return p.cat==='pants'&&!p.special;}) },
+    { label:'テープ止め', list: products.filter(function(p){return p.cat==='tape';}) },
     { label:'その他', list: products.filter(function(p){return p.special;}) },
   ];
 
@@ -896,8 +896,8 @@ function confirmOrder() {
     '青':'#42a5f5','紫':'#ab47bc','濃い紫':'#6a1b9a','深緑':'#2e7d32'};
   var catDef = [
     { label:'パッド類', cat:'pad', special:false },
-    { label:'テープ止め', cat:'tape', special:false },
     { label:'リハビリパンツ', cat:'pants', special:false },
+    { label:'テープ止め', cat:'tape', special:false },
     { label:'その他', cat:null, special:true }
   ];
   var html = '';
