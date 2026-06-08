@@ -629,7 +629,7 @@ function showToast(msg) {
   const t = document.getElementById("toast");
   t.textContent = msg;
   t.style.opacity = 1;
-  setTimeoutfunction(() { t.style.opacity = 0; }, 2000);
+  setTimeout(function() { t.style.opacity = 0; }, 2000);
 }
 
 // --- 計算 ---
@@ -761,7 +761,7 @@ function updateWeeklyColVisibility(pid) {
 }
 
 function updateCard(pid) {
-  const p = products.find(function(x) x.id === pid);
+  const p = products.find(function(x) { return x.id === pid; });
   const s = state[currentFloor][pid];
   const stock = totalStock(p);
   const suggested = calcOrder(p);
@@ -901,7 +901,7 @@ function updateSummary() {
   let group1Total = 0, group2Total = 0;
 
   cats.forEach(function(cat) {
-    const items = products.filter(function(p) p.cat === cat && state[currentFloor][p.id].orderQty > 0);
+    const items = products.filter(function(p) { return p.cat === cat && state[currentFloor][p.id].orderQty > 0; });
     if (!items.length) return;
     const label = cat === "pad" ? "パッド類" : cat === "pants" ? "リハパン" : "テープ止め";
     html += "<div class=\"summary-cat-label\">" + (label) + "</div><div class=\"summary-items\">";
@@ -1123,8 +1123,8 @@ function doConfirmOrder(dateStr) {
   } else {
     hist.push({ date: dateStr, floor: currentFloor, orders });
   }
-  const floorEntries = hist.filter(function(h) h.floor === currentFloor).slice(-MAX_HISTORY);
-  const otherEntries = hist.filter(function(h) h.floor !== currentFloor);
+  const floorEntries = hist.filter(function(h) { return h.floor === currentFloor; }).slice(-MAX_HISTORY);
+  const otherEntries = hist.filter(function(h) { return h.floor !== currentFloor; });
   saveHistory(otherEntries.concat(floorEntries).sort(function(a,b) { return a.date < b.date ? -1 : 1; }));
   // 来週日曜の在庫予想を保存（同日上書き）
   const sunRecord = { date: dateStr, floor: currentFloor, items: {}, stocks: {} };
@@ -1177,12 +1177,12 @@ function updatePrevBadge(pid) {
 function renderHistory() {
   const body = document.getElementById('history-body');
   if (!body) return;
-  const hist = loadHistory().filter(function(h) h.floor === currentFloor).reverse();
+  const hist = loadHistory().filter(function(h) { return h.floor === currentFloor; }).reverse();
   if (!hist.length) {
     body.innerHTML = '<div class="history-empty">まだ履歴がありません</div>';
     return;
   }
-  const prods = products.filter(function(p) !p.special);
+  const prods = products.filter(function(p) { return !p.special; });
   let html = '<div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:11px;min-width:100%">';
   html += '<tr style="background:#f0f0f0"><th style="padding:4px 6px;text-align:left;white-space:nowrap">商品</th>';
   hist.forEach(function(h) {
@@ -1208,7 +1208,7 @@ function renderHistory() {
 
 function deleteHistory(key) {
   const hist = loadHistory();
-  const newHist = hist.filter(function(h) (h.date + '_' + h.floor) !== key);
+  const newHist = hist.filter(function(h) { return (h.date + '_' + h.floor; }) !== key);
   saveHistory(newHist);
   renderHistory();
 }
@@ -1387,7 +1387,7 @@ function updateRoomReflectLabelMobile() {
 
 // 週必要枚数の表示を更新
 function updateWeeklyDisplay() {
-  products.filter(function(p) p.weeklyFixed !== null).forEach(function(p) {
+  products.filter(function(p) { return p.weeklyFixed !== null; }).forEach(function(p) {
     const override = state[currentFloor][p.id].weeklyOverride;
     const custom = getWeeklyFixed(p.id);
     let val, isOverride = false;
@@ -1424,15 +1424,15 @@ function buildRoomSection() {
   rooms.forEach(function(roomNo) {
     const rs = getRoomState(currentFloor, roomNo);
     // 使用中の銘柄サマリー
-    const usedItems = products.filter(function(p) rs.products[p.id] && rs.products[p.id].checked && rs.products[p.id].qty > 0);
+    const usedItems = products.filter(function(p) { return rs.products[p.id] && rs.products[p.id].checked && rs.products[p.id].qty > 0; });
     const summaryText = usedItems.length > 0
-      ? usedItems.map(function(p) p.short + ' ' + rs.products[p.id].qty + '枚').join('・')
+      ? usedItems.map(function(p) { return p.short + ' ' + rs.products[p.id].qty + '枚'; }).join('・')
       : '未登録';
 
     let productRows = '';
     const catLabels = { pad: 'パッド類', tape: 'テープ止め', pants: 'フィットパンツ' };
     let lastCat = null;
-    products.filter(function(p) !p.special).forEach(function(p) {
+    products.filter(function(p) { return !p.special; }).forEach(function(p) {
       if (p.cat !== lastCat) {
         productRows += "<div style=\"font-size:15px;font-weight:700;color:#2a5a2a;background:#f0f7f0;padding:6px 8px;margin:6px -14px 4px\">" + (catLabels[p.cat]) + "</div>";
         lastCat = p.cat;
@@ -1497,11 +1497,11 @@ function counterChange(roomNo, pid, delta) {
   setRoomState(currentFloor, roomNo, rs);
 
   // サマリー更新
-  const usedItems = products.filter(function(p) rs.products[p.id] && rs.products[p.id].qty > 0);
+  const usedItems = products.filter(function(p) { return rs.products[p.id] && rs.products[p.id].qty > 0; });
   const summaryEl = document.getElementById('rsummary-' + roomNo);
   if (summaryEl) {
     summaryEl.textContent = usedItems.length > 0
-      ? usedItems.map(function(p) p.short + ' ' + rs.products[p.id].qty + '枚').join('・')
+      ? usedItems.map(function(p) { return p.short + ' ' + rs.products[p.id].qty + '枚'; }).join('・')
       : '未登録';
   }
 
@@ -1524,13 +1524,12 @@ function updateRoomProduct(roomNo, pid) {
   setRoomState(currentFloor, roomNo, rs);
 
   // サマリー更新
-  const usedItems = products.filter(function(p)
-    rs.products[p.id] && rs.products[p.id].qty > 0
-  );
+  const usedItems = products.filter(function(p) { return rs.products[p.id] && rs.products[p.id].qty > 0
+  ; });
   const summaryEl = document.getElementById('rsummary-' + roomNo);
   if (summaryEl) {
     summaryEl.textContent = usedItems.length > 0
-      ? usedItems.map(function(p) p.short + ' ' + rs.products[p.id].qty + '枚').join('・')
+      ? usedItems.map(function(p) { return p.short + ' ' + rs.products[p.id].qty + '枚'; }).join('・')
       : '未登録';
   }
 }
@@ -1659,7 +1658,7 @@ function resetWeeklyFixed(pid) {
   const input = document.getElementById('weekly-input-' + pid);
   if (input) input.value = 0;
   updateWeeklyDisplay();
-  const p = products.find(function(x) x.id === pid);
+  const p = products.find(function(x) { return x.id === pid; });
   if (p) updateCard(pid);
   showToast('0にリセットしました');
 }
@@ -1673,12 +1672,12 @@ function updateWeeklyFixed(pid, val) {
   }
   saveWeeklyFixed(data);
   updateWeeklyDisplay();
-  const p = products.find(function(x) x.id === pid);
+  const p = products.find(function(x) { return x.id === pid; });
   if (p) updateCard(pid);
 }
 
 function showWeeklyInputs(show) {
-  products.filter(function(p) p.weeklyFixed !== null).forEach(function(p) {
+  products.filter(function(p) { return p.weeklyFixed !== null; }).forEach(function(p) {
     const input = document.getElementById('weekly-input-' + p.id);
     const disp = document.getElementById('weekly-disp-' + p.id);
     if (!input) return;
@@ -1791,7 +1790,7 @@ function importFloorData(input, targetFloor) {
       try { Object.assign(all, JSON.parse(localStorage.getItem('diaper_rooms') || '{}')); } catch(e2) {}
 
       // 古い形式：キーが「3F_301」のような居室データのみのJSON
-      const isOldFormat = Object.keys(data).some(function(k) /^[23]F_\d+$/.test(k));
+      const isOldFormat = Object.keys(data).some(function(k) { return /^[23]F_\d+$/.test(k; }));
 
       if (isOldFormat) {
         // 古い形式：そのまま居室データとして読み込む
@@ -1862,7 +1861,7 @@ function importData(event) {
     try {
       const data = JSON.parse(e.target.result);
       // 古い居室データ形式（3F_301等のキー）の場合は居室データとして読み込む
-      const isOldRoomFormat = Object.keys(data).some(function(k) /^[23]F_\d+$/.test(k));
+      const isOldRoomFormat = Object.keys(data).some(function(k) { return /^[23]F_\d+$/.test(k; }));
       if (isOldRoomFormat) {
         const all = {};
         try { Object.assign(all, JSON.parse(localStorage.getItem('diaper_rooms') || '{}')); } catch(e2) {}
