@@ -106,7 +106,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-ser
   width: 100%; padding: 10px; border-radius: 8px;
   border: 2px solid #e53935; font-size: 30px; font-weight: 800;
   text-align: center; font-family: inherit; outline: none;
-  width: 350px;
+  width: 100%;
   background: #fff5f5; color: #c62828; margin-top: 4px;
 }
 .sug-lbl { font-size: 18px; color: #1565c0; font-weight: 700; }
@@ -171,7 +171,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-ser
 .holiday-banner.show { display: block; }
 
 /* 居室管理 */
-.room-card { background: #fff; border-radius: 10px; margin-bottom: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.room-card { background: #fff; border-radius: 10px; margin-bottom: 8px; overflow: hidden; }
 .room-hd { background: #d6edd6; padding: 9px 12px; font-weight: 800; font-size: 14px; }
 .room-row { display: flex; align-items: center; justify-content: space-between; padding: 4px 12px; border-bottom: 1px solid #f0f0f0; }
 .room-row:last-child { border-bottom: none; }
@@ -593,6 +593,11 @@ function colorHex(c) {
     '青':'#42a5f5','紫':'#ab47bc','濃い紫':'#6a1b9a','深緑':'#2e7d32'};
   return m[c] || '#ccc';
 }
+function colorHexText(c) {
+  const m = {'白小':'#888','白大':'#777','グレー':'#666','緑':'#2e7d32',
+    '青':'#1565c0','紫':'#7b1fa2','濃い紫':'#4a148c','深緑':'#1b5e20'};
+  return m[c] || '#555';
+}
 
 function buildCards() {
   const list = cat==='pad' ? products.filter(p=>p.cat==='pad') :
@@ -612,7 +617,7 @@ function buildCards() {
     if (p.weeklyFixed !== null) {
       const ovStyle = ov ? 'border-color:#f57c00;background:#fff8f0;color:#c05000' : 'border-color:#a0d4b0;background:#f0fdf6;color:#1a4a3a';
       const ovLabel = ov ? '<div style="font-size:9px">居室集計より</div>' : '';
-      const weeklyInput = isAdmin ? '<input type="number" class="weekly-in" placeholder="変更（空=リセット）" value="' + (custom&&custom>0?custom:'') + '" oninput="updateWeeklyFixed(' + p.id + ',this.value);updateCard(' + p.id + ')">' : '';
+      const weeklyInput = '';
       const weeklySection = '<div><div class="info-lbl">' + (isAdmin ? '週必要枚数' : '') + '</div>'
         + (isAdmin ? '<div class="box-weekly" id="wk-wrap-' + p.id + '" style="' + ovStyle + '"><div class="info-val" id="wk-' + p.id + '">' + wn + '枚</div>' + ovLabel + '</div>' + weeklyInput : '') + '</div>';
       const afTapeHtml = isAdmin ? '<div class="info-lbl" style="color:#bbb;font-size:12px">木曜届く前の残り</div><div class="box-after" id="af-wrap-' + p.id + '"><div class="info-val" id="af-' + p.id + '" style="font-size:12px">-</div></div>' : '';
@@ -650,7 +655,7 @@ function buildCards() {
       + (isAdmin ? getPrevSunHtml(p.id, p) : '')
       + bottomRow
       + '<div style="margin-top:8px">'
-      + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px"><div style="font-size:25px;font-weight:700;color:#c62828"><span style="font-size:20px;background:#fff;color:#1565c0;border:2px solid #1565c0;border-radius:50%;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;margin-right:6px;vertical-align:middle;flex-shrink:0;font-weight:800">2</span>注文箱数</div><span class="sug-lbl" id="sug-' + p.id + '" style="font-size:20px;font-weight:800;color:#1565c0;background:#e3f2fd;border:2px solid #1565c0;border-radius:8px;padding:2px 12px;visibility:' + (sug>0?'visible':'hidden') + '">' + (sug>0?'推奨 : '+sug+' 箱':'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;') + '</span></div>'
+      + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px"><div style="font-size:25px;font-weight:700;color:#c62828"><span style="font-size:20px;background:#fff;color:#1565c0;border:2px solid #1565c0;border-radius:50%;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;margin-right:6px;vertical-align:middle;flex-shrink:0;font-weight:800">2</span><span style="font-size:20px;color:' + colorHexText(p.color) + ';font-weight:700;margin-right:0.5em">' + (p.short||p.name) + '</span>注文箱数</div><span class="sug-lbl" id="sug-' + p.id + '" style="font-size:20px;font-weight:800;color:#1565c0;background:#e3f2fd;border:2px solid #1565c0;border-radius:8px;padding:2px 12px;visibility:' + (sug>0?'visible':'hidden') + '">' + (sug>0?'推奨 : '+sug+' 箱':'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;') + '</span></div>'
       + '<input type="number" class="order-in" min="0" value="' + (s.orderQty||'') + '" placeholder="0" oninput="onInput(' + p.id + ',\'orderQty\',this.value)">'
       + '<div style="text-align:right;padding-right:4px;margin-top:2px"><span style="font-size:10px;color:#aaa">来週日曜在庫予想：</span><span id="sun-' + p.id + '" style="font-size:18px!important;color:#aaa;font-weight:700">-</span></div>'
       + '</div></div>';
