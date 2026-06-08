@@ -1127,7 +1127,7 @@ function switchFloor(floor, btn) {
   btn.classList.add("active");
   var reflectDate = localStorage.getItem('diaper_room_reflect_date_' + floor) || '';
   var bannerEl = document.getElementById("floor-banner");
-  if (reflectDate) {
+  if (reflectDate && hasRoomDataForFloor(floor)) {
     bannerEl.innerHTML = floorLabel(floor) + 'の在庫を入力中 <span style="font-size:10px">(' + reflectDate + ' 反映済み)</span>';
   } else {
     bannerEl.textContent = floorLabel(floor) + 'の在庫を入力中';
@@ -1533,11 +1533,25 @@ function reflectRoomToDaily(silent) {
   updateRoomReflectLabelMobile();
 }
 
+function hasRoomDataForFloor(floor) {
+  var rooms = (typeof ROOMS !== 'undefined' && ROOMS[floor]) ? ROOMS[floor] : [];
+  for (var i = 0; i < rooms.length; i++) {
+    var rs = getRoomState(floor, rooms[i]);
+    if (rs && rs.products) {
+      var keys = Object.keys(rs.products);
+      for (var k = 0; k < keys.length; k++) {
+        if (rs.products[keys[k]] && rs.products[keys[k]].qty > 0) return true;
+      }
+    }
+  }
+  return false;
+}
+
 function updateRoomReflectLabelMobile() {
   var lbl = document.getElementById('room-reflect-label');
   if (!lbl) return;
   var savedDate = localStorage.getItem('diaper_room_reflect_date_' + currentFloor) || '';
-  if (savedDate) {
+  if (savedDate && hasRoomDataForFloor(currentFloor)) {
     lbl.textContent = '✅ 居室管理を反映済み　' + savedDate;
     lbl.style.display = 'block';
   } else {
