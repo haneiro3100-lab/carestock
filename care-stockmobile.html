@@ -1046,7 +1046,7 @@ function getLastOrder(floor, pid) {
   // 最新エントリを探す
   for (let i = hist.length - 1; i >= 0; i--) {
     const entry = hist[i];
-    if (entry.floor === floor && entry.orders[pid] !== undefined) {
+    if (entry.floor === floor && entry.orders && entry.orders[pid] !== undefined) {
       return entry.orders[pid];
     }
   }
@@ -1520,7 +1520,7 @@ function updateRoomProduct(roomNo, pid) {
   // 保存
   const rs = getRoomState(currentFloor, roomNo);
   if (!rs.products) rs.products = {};
-  rs.products[pid] = { checked: qty > 0, qty };
+  rs.products[pid] = { checked: qty > 0, qty: qty };
   setRoomState(currentFloor, roomNo, rs);
 
   // サマリー更新
