@@ -2032,6 +2032,7 @@ function importFloorData(input, targetFloor) {
       buildCards();
       syncInputsToState();
       reflectRoomToDaily(true);
+      updateRoomReflectLabelMobile();
       showToast('📥 ' + targetFloor + 'のデータを読み込みました！');
     } catch(err) {
       showToast('❌ ファイルが正しくありません');
@@ -2107,6 +2108,7 @@ function importData(event) {
       }
       syncInputsToState();
       reflectRoomToDaily(true);
+      updateRoomReflectLabelMobile();
       statusEl.style.display = '';
       statusEl.className = 'ok';
       statusEl.textContent = '✓ 読み込み完了！使用量と居室データが復元されました。';
