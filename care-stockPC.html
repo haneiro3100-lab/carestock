@@ -1303,6 +1303,9 @@ function importFloorDataPc(input, targetFloor) {
         Object.assign(all, data.rooms);
         localStorage.setItem('diaper_rooms', JSON.stringify(all));
       }
+      if (data.reflectDate) {
+        localStorage.setItem('diaper_room_reflect_date_' + targetFloor, data.reflectDate);
+      }
       reflectRoom(true); buildCards(); updateSummary();
       showToast('📥 ' + targetFloor + 'のデータを読み込みました！');
     } catch(err) { showToast('❌ ファイルが正しくありません'); }

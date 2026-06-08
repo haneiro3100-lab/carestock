@@ -1969,6 +1969,9 @@ function exportFloorData(floor) {
   } catch(e) {}
   data.rooms = roomData;
 
+  // 反映日付
+  data.reflectDate = localStorage.getItem('diaper_room_reflect_date_' + floor) || '';
+
   const json = JSON.stringify(data, null, 2);
   const blob = new Blob([json], { type: 'application/json' });
   const date = new Date().toLocaleDateString('ja-JP').replace(/\//g, '-');
@@ -2019,6 +2022,9 @@ function importFloorData(input, targetFloor) {
           Object.keys(all).forEach(k => { if (k.startsWith(targetFloor + '_')) delete all[k]; });
           Object.assign(all, data.rooms);
           localStorage.setItem('diaper_rooms', JSON.stringify(all));
+        }
+        if (data.reflectDate) {
+          localStorage.setItem('diaper_room_reflect_date_' + targetFloor, data.reflectDate);
         }
       }
 
