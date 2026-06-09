@@ -55,9 +55,9 @@
   .floor-tab {
     flex: 1; padding: 7px 4px; border-radius: 8px; border: none;
     background: rgba(0,0,0,0.08); color: #2a4a2a;
-    font-weight: 800; font-size: 13px; cursor: pointer; font-family: inherit;
+    font-weight: 800; font-size: 20px; cursor: pointer; font-family: inherit;
   }
-  .floor-tab.active { background: #2e7d32; color: #fff; }
+  .floor-tab.active { background: #e65100; color: #fff; }
 
   /* カテゴリタブ */
   .cat-tabs { display: flex; gap: 6px; }
@@ -400,7 +400,10 @@
       <div class="header-title">📦 オムツ注文管理</div>
     </div>
     <div class="btn-group">
-      <span id="staff-label" style="font-size:11px;font-weight:800;color:#3a5a3a;background:rgba(255,255,255,0.3);padding:4px 8px;border-radius:6px;white-space:nowrap">📋 注文シート</span>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">
+        <span id="staff-label" style="font-size:11px;font-weight:800;color:#3a5a3a;background:rgba(255,255,255,0.3);padding:4px 8px;border-radius:6px;white-space:nowrap">📋 注文シート</span>
+        <span id="reflect-date-label" style="font-size:10px;color:#2a7a2a;white-space:nowrap"></span>
+      </div>
     </div>
   </div>
 
@@ -424,7 +427,6 @@
 </div>
 
 
-<div id="floor-banner">2階の在庫を入力中</div>
 <div class="holiday-banner" id="holiday-banner">🏖 連休モード：14日分で計算中</div>
 <div id="mode-banner" style="display:none"></div>
 
@@ -956,18 +958,12 @@ function switchFloor(floor, btn) {
   document.querySelectorAll(".floor-tab").forEach(function(t) { t.classList.remove("active"); });
   btn.classList.add("active");
   var reflectDate = localStorage.getItem('diaper_room_reflect_date_' + floor) || '';
-  var bannerEl = document.getElementById("floor-banner");
   if (reflectDate && !hasRoomDataForFloor(floor)) {
     localStorage.removeItem('diaper_room_reflect_date_' + floor);
-    reflectDate = '';
-  }
-  if (reflectDate) {
-    bannerEl.innerHTML = floorLabel(floor) + 'の在庫を入力中 <span style="font-size:10px">(' + reflectDate + ' 反映済み)</span>';
-  } else {
-    bannerEl.textContent = floorLabel(floor) + 'の在庫を入力中';
   }
   syncInputsToState();
   reflectRoomToDaily(true);  // フロア切替時も自動反映
+  updateReflectDateLabel();
   updateSaveDateLabel();
   products.forEach(function(p) { updatePrevBadge(p.id); });
   renderHistory();
@@ -1366,6 +1362,7 @@ function reflectRoomToDaily(silent) {
   var dateStr = (now.getMonth()+1) + '/' + now.getDate();
   localStorage.setItem('diaper_room_reflect_date_' + currentFloor, dateStr);
   updateRoomReflectLabelMobile();
+  updateReflectDateLabel();
 }
 
 function hasRoomDataForFloor(floor) {
@@ -1763,6 +1760,17 @@ function importRoomData(input) {
 }
 
 
+
+function updateReflectDateLabel() {
+  var el = document.getElementById('reflect-date-label');
+  if (!el) return;
+  var date = localStorage.getItem('diaper_room_reflect_date_' + currentFloor) || '';
+  if (date && hasRoomDataForFloor(currentFloor)) {
+    el.textContent = '居室データ:' + date + ' 反映済み';
+  } else {
+    el.textContent = '';
+  }
+}
 function getFacilityPrefix() {
   var name = localStorage.getItem('facility_name') || '';
   return name ? name + '_' : '';
@@ -1962,6 +1970,7 @@ var fnEl = document.getElementById('facility-name');
 if (fnEl) fnEl.value = localStorage.getItem('facility_name') || '';
 
 reflectRoomToDaily(true);  // 居室管理を自動反映
+updateReflectDateLabel();
 updateRoomReflectLabelMobile();
 // 起動時にfloor-bannerに反映日付を表示
 (function() {
