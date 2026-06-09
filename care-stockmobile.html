@@ -506,6 +506,12 @@
     1日使用量はこの端末のブラウザに保存されます。<br>
     キャッシュクリアや機種変更の前に書き出しておきましょう。
   </div>
+  <div style="margin-bottom:8px">
+    <div style="font-size:11px;color:#888;margin-bottom:4px">書き出しファイル名の先頭に付ける名前（任意）</div>
+    <input type="text" id="facility-name" placeholder="例：ケアユニット" value=""
+      style="width:100%;padding:8px;border:1.5px solid #dde8e4;border-radius:8px;font-size:14px;font-family:inherit;box-sizing:border-box"
+      oninput="localStorage.setItem('facility_name', this.value)">
+  </div>
   <div class="backup-btns">
     <button class="btn-export" onclick="exportData()">📤 全データ書き出し</button>
     <label class="btn-import">
@@ -1738,6 +1744,11 @@ function importRoomData(input) {
   reader.readAsText(file);
 }
 
+
+function getFacilityPrefix() {
+  var name = localStorage.getItem('facility_name') || '';
+  return name ? name + '_' : '';
+}
 function exportFloorData(floor) {
   const data = {};
   // 1日使用量
@@ -1931,6 +1942,10 @@ updateSaveDateLabel();
 products.forEach(function(p) { updatePrevBadge(p.id); });
 renderHistory();
 updateWeeklyDisplay();
+// 施設名を入力欄に反映
+var fnEl = document.getElementById('facility-name');
+if (fnEl) fnEl.value = localStorage.getItem('facility_name') || '';
+
 reflectRoomToDaily(true);  // 居室管理を自動反映
 updateRoomReflectLabelMobile();
 // 起動時にfloor-bannerに反映日付を表示
