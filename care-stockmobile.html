@@ -964,7 +964,6 @@ function switchFloor(floor, btn) {
 
 function switchCat(cat, btn) {
   currentCat = cat;
-  window.scrollTo({ top: 0, behavior: "smooth" });
   document.querySelectorAll(".tab").forEach(function(t) {
     t.classList.remove("active");
     const span = t.querySelector("span");
@@ -987,6 +986,7 @@ function switchCat(cat, btn) {
 
   if (isRoom) {
     buildRoomSection();
+    requestAnimationFrame(function() { window.scrollTo({ top: 0, behavior: "smooth" }); });
     return;
   }
 
@@ -998,6 +998,7 @@ function switchCat(cat, btn) {
       card.className = "card" + (p.cat === cat ? " visible" : "") + (isLow ? " low" : "");
     }
   });
+  requestAnimationFrame(function() { window.scrollTo({ top: 0, behavior: "smooth" }); });
 }
 
 function autoFill() {
