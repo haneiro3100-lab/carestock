@@ -510,7 +510,7 @@
     <div style="font-size:11px;color:#888;margin-bottom:4px">書き出しファイル名の先頭に付ける名前（任意）</div>
     <input type="text" id="facility-name" placeholder="例：ケアユニット" value=""
       style="width:100%;padding:8px;border:1.5px solid #dde8e4;border-radius:8px;font-size:14px;font-family:inherit;box-sizing:border-box"
-      oninput="localStorage.setItem('facility_name', this.value)">
+      oninput="localStorage.setItem('facility_name', this.value)" onchange="localStorage.setItem('facility_name', this.value)">
   </div>
   <div class="backup-btns">
     <button class="btn-export" onclick="exportData()">📤 全データ書き出し</button>
@@ -1622,6 +1622,9 @@ function toggleMode() {
     banner.style.display = 'none';
     if (staffLabel) staffLabel.textContent = '⚙️ 管理者';
     showWeeklyInputs(true);
+    // 施設名を入力欄に反映
+    var fnEl = document.getElementById('facility-name');
+    if (fnEl) fnEl.value = localStorage.getItem('facility_name') || '';
     // 居室管理タブを表示
     document.getElementById('tab-room').style.display = 'inline-block';
   } else {
@@ -1774,7 +1777,7 @@ function exportFloorData(floor) {
   const json = JSON.stringify(data, null, 2);
   const blob = new Blob([json], { type: 'application/json' });
   const date = new Date().toLocaleDateString('ja-JP').replace(/\//g, '-');
-  const filename = 'floor-' + floor + '-' + date + '.json';
+  const filename = getFacilityPrefix() + 'floor-' + floor + '-' + date + '.json';
 
   if (navigator.share) {
     const file = new File([blob], filename, { type: 'application/json' });
@@ -1858,7 +1861,7 @@ function exportData() {
   const now = new Date();
   const ymd = now.getFullYear() + ('0'+(now.getMonth()+1)).slice(-2) + ('0'+now.getDate()).slice(-2);
   a.href = url;
-  a.download = 'diaper-backup-' + ymd + '.json';
+  a.download = getFacilityPrefix() + 'diaper-backup-' + ymd + '.json';
   a.click();
   URL.revokeObjectURL(url);
   showToast('📤 書き出しました！');
