@@ -1791,7 +1791,6 @@ function exportFloorData(floor) {
     const a = document.createElement('a'); a.href = url; a.download = filename; a.click();
     URL.revokeObjectURL(url);
   }
-  showToast('📤 ' + floor + 'のデータを書き出しました');
 }
 
 function importFloorData(input, targetFloor) {
@@ -1864,7 +1863,6 @@ function exportData() {
   a.download = getFacilityPrefix() + 'オムツ居室枚数-' + ymd + '.json';
   a.click();
   URL.revokeObjectURL(url);
-  showToast('📤 書き出しました！');
 }
 
 function importData(event) {

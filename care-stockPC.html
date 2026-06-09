@@ -1328,7 +1328,7 @@ function exportAllDataPc() {
   var json = JSON.stringify(data, null, 2);
   var blob = new Blob([json], { type: 'application/json' });
   var date = new Date().toLocaleDateString('ja-JP').replace(/\//g, '-');
-  var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'all-data-' + date + '.json'; a.click();
+  var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'オムツ居室枚数-' + date + '.json'; a.click();
   showToast('📤 全データを書き出しました');
 }
 
@@ -1346,7 +1346,7 @@ function exportFloorDataPc(f) {
   var json = JSON.stringify(data, null, 2);
   var blob = new Blob([json], { type: 'application/json' });
   var date = new Date().toLocaleDateString('ja-JP').replace(/\//g, '-');
-  var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'floor-' + f + '-' + date + '.json'; a.click();
+  var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'オムツ居室枚数-' + f + '-' + date + '.json'; a.click();
   showToast('📤 ' + f + 'のデータを書き出しました');
 }
 function importFloorDataPc(input, targetFloor) {
