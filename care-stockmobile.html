@@ -1459,8 +1459,23 @@ function buildRoomSection() {
     html += "\n    <div class=\"room-card\" id=\"room-card-" + (roomNo) + "\">\n      <div class=\"room-card-header\" onclick=\"toggleRoom(" + (roomNo) + ")\">\n        <div>\n          <div class=\"room-no\">" + (roomNo) + "号室</div>\n          <div class=\"room-summary\" id=\"rsummary-" + (roomNo) + "\">" + (summaryText) + "</div>\n        </div>\n        <div class=\"room-toggle\" id=\"rtoggle-" + (roomNo) + "\">▼</div>\n      </div>\n      <div class=\"room-body\" id=\"rbody-" + (roomNo) + "\">\n        " + (productRows) + "\n        <div style=\"text-align:center;padding:10px 0 4px\">\n          <button onclick=\"toggleRoom(" + (roomNo) + ")\" style=\"padding:6px 20px;border:none;border-radius:20px;background:#d6edd6;color:#2a5a2a;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit\">▲ 折りたたむ</button>\n        </div>\n      </div>\n    </div>";
   });
 
+  // メモスペース
+  var memoVal = localStorage.getItem('diaper_room_memo') || '';
+  html += '<div style="margin:18px 0 8px;padding:12px 14px;background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,0.08)">'
+    + '<div style="font-size:12px;font-weight:700;color:#2a5a2a;margin-bottom:6px">📝 メモ</div>'
+    + '<textarea id="room-memo-area" rows="5" placeholder="フリーメモ..." oninput="saveRoomMemo()" style="width:100%;font-size:16px!important;font-family:inherit;border:1px solid #c8e6c9;border-radius:8px;padding:8px 10px;resize:none;background:#f9fdf9;color:#333;box-sizing:border-box">'
+    + memoVal.replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    + '</textarea>'
+    + '</div>';
+
   sec.innerHTML = html;
   updateRoomReflectLabelMobile();
+}
+
+function saveRoomMemo() {
+  var el = document.getElementById('room-memo-area');
+  if (!el) return;
+  localStorage.setItem('diaper_room_memo', el.value);
 }
 
 function toggleRoom(roomNo) {
