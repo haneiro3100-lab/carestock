@@ -1253,6 +1253,14 @@ function importRoomData(input) {
     try {
       const data = JSON.parse(e.target.result);
       localStorage.setItem('diaper_rooms', JSON.stringify(data));
+      // インポート時に今日の日付を記録（両フロア）
+      var now = new Date();
+      var dateStr = (now.getMonth()+1) + '/' + now.getDate();
+      ['2F','3F'].forEach(function(f) {
+        localStorage.setItem('diaper_room_reflect_date_' + f, dateStr);
+      });
+      reflectRoom(true);
+      updateRoomReflectLabel();
       showToast('📥 インポートしました！居室管理タブで確認できます');
       if (cat === 'room') buildRoom();
       else { switchCat('room', document.getElementById('cb-room')); }
@@ -1307,6 +1315,7 @@ function importAllDataPc(input) {
         if (rd) localStorage.setItem('diaper_room_reflect_date_' + f, rd);
       });
       reflectRoom(true); buildCards(); updateSummary(); updateRoomReflectLabel();
+      if (cat === 'room') buildRoom();
       showToast('📥 全データを読み込みました！');
     } catch(err) { showToast('❌ ファイルが正しくありません'); }
     input.value = '';
@@ -1372,6 +1381,7 @@ function importFloorDataPc(input, targetFloor) {
         localStorage.setItem('diaper_room_reflect_date_' + targetFloor, data.reflectDate);
       }
       reflectRoom(true); buildCards(); updateSummary(); updateRoomReflectLabel();
+      if (cat === 'room') buildRoom();
       showToast('📥 ' + targetFloor + 'のデータを読み込みました！');
     } catch(err) { showToast('❌ ファイルが正しくありません'); }
     input.value = '';
