@@ -1749,6 +1749,13 @@ function importRoomData(input) {
     try {
       const data = JSON.parse(e.target.result);
       localStorage.setItem('diaper_rooms', JSON.stringify(data));
+      // 反映日付：インポートした日を記録（両フロア）
+      const nowD = new Date();
+      const importDateStr = (nowD.getMonth()+1) + '/' + nowD.getDate();
+      FLOORS.forEach(function(f) {
+        localStorage.setItem('diaper_room_reflect_date_' + f, importDateStr);
+      });
+      updateReflectDateLabel();
       showToast('📥 居室データをインポートしました！');
       buildRoomSection();
     } catch(err) {
@@ -1847,16 +1854,18 @@ function importFloorData(input, targetFloor) {
           Object.assign(all, data.rooms);
           localStorage.setItem('diaper_rooms', JSON.stringify(all));
         }
-        if (data.reflectDate) {
-          localStorage.setItem('diaper_room_reflect_date_' + targetFloor, data.reflectDate);
-        }
       }
+
+      // 反映日付：インポートした日を記録
+      var nowD2 = new Date();
+      localStorage.setItem('diaper_room_reflect_date_' + targetFloor, (nowD2.getMonth()+1) + '/' + nowD2.getDate());
 
       FLOORS.forEach(function(f) { loadDailyUse(f); });
       buildCards();
       syncInputsToState();
       reflectRoomToDaily(true);
       updateRoomReflectLabelMobile();
+      buildRoomSection();
       showToast('📥 ' + targetFloor + 'のデータを読み込みました！');
     } catch(err) {
       showToast('❌ ファイルが正しくありません');
@@ -1903,7 +1912,15 @@ function importData(event) {
         try { Object.assign(all, JSON.parse(localStorage.getItem('diaper_rooms') || '{}')); } catch(e2) {}
         Object.assign(all, data);
         localStorage.setItem('diaper_rooms', JSON.stringify(all));
+        // 反映日付：インポートした日を記録（両フロア）
+        var nowD3 = new Date();
+        var importDateStr3 = (nowD3.getMonth()+1) + '/' + nowD3.getDate();
+        FLOORS.forEach(function(f) {
+          localStorage.setItem('diaper_room_reflect_date_' + f, importDateStr3);
+        });
         buildCards(); syncInputsToState(); reflectRoomToDaily(true);
+        updateRoomReflectLabelMobile();
+        buildRoomSection();
         statusEl.style.display = '';
         statusEl.className = 'ok';
         statusEl.textContent = '✓ 居室データを読み込みました！';
@@ -1923,9 +1940,9 @@ function importData(event) {
         const saveData = {};
         products.forEach(function(p) { saveData[p.id] = state[f][p.id].dailyUse; });
         localStorage.setItem(saveKey(f), JSON.stringify(saveData));
-        // 反映日付
-        const rd = data['reflectDate_'+f] || '';
-        if (rd) localStorage.setItem('diaper_room_reflect_date_' + f, rd);
+        // 反映日付：インポートした日を記録
+        const nowD4 = new Date();
+        localStorage.setItem('diaper_room_reflect_date_' + f, (nowD4.getMonth()+1) + '/' + nowD4.getDate());
       });
       // 居室データ（PC版はdata.all、スマホ版はdata.rooms）
       const roomSrc = data.all || data.rooms || null;
@@ -1935,6 +1952,7 @@ function importData(event) {
       syncInputsToState();
       reflectRoomToDaily(true);
       updateRoomReflectLabelMobile();
+      buildRoomSection();
       statusEl.style.display = '';
       statusEl.className = 'ok';
       statusEl.textContent = '✓ 読み込み完了！使用量と居室データが復元されました。';
