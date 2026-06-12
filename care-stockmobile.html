@@ -501,6 +501,11 @@
     <div class="history-toggle" id="gap-toggle-icon">▼ 開く</div>
   </div>
   <div id="gap-mobile" class="admin-only" style="display:none;margin-top:4px;font-size:11px;overflow-x:auto"></div>
+  <div class="history-header admin-only" onclick="toggleGraphMobile()" id="graph-header" style="margin-top:4px;display:none">
+    <div class="history-header-title">📈 在庫・注文の推移（1年）</div>
+    <div class="history-toggle" id="graph-toggle-icon">▼ 開く</div>
+  </div>
+  <div id="graph-mobile" class="admin-only" style="display:none;margin-top:4px"></div>
 </div>
 
 <!-- バックアップ -->
@@ -997,6 +1002,8 @@ function switchFloor(floor, btn) {
   updateSaveDateLabel();
   products.forEach(function(p) { updatePrevBadge(p.id); });
   renderHistory();
+  var grP = document.getElementById('graph-mobile');
+  if (grP && grP.style.display !== 'none') renderGraphMobile();
   updateWeeklyDisplay();
   if (currentCat === 'room') buildRoomSection();
 }
@@ -1179,6 +1186,19 @@ function doConfirmOrder(dateStr) {
   if (sameIdx >= 0) { sunHist[sameIdx] = sunRecord; } else { sunHist.unshift(sunRecord); if (sunHist.length > 4) sunHist = sunHist.slice(0, 4); }
   localStorage.setItem(sunHistKey, JSON.stringify(sunHist));
   localStorage.setItem('diaper_sun_record_' + currentFloor, JSON.stringify(sunRecord));
+  // グラフ用の長期ログ（1年分）を保存（同日上書き）
+  const glKey = 'diaper_graph_log_' + currentFloor;
+  let gLog = [];
+  try { gLog = JSON.parse(localStorage.getItem(glKey) || '[]'); } catch(e) {}
+  const gEntry = { date: dateStr, data: {} };
+  products.forEach(function(p) {
+    gEntry.data[p.id] = { s: totalStock(p), o: state[currentFloor][p.id].orderQty || 0 };
+  });
+  const gIdx = gLog.findIndex(function(g) { return g.date === dateStr; });
+  if (gIdx >= 0) { gLog[gIdx] = gEntry; } else { gLog.push(gEntry); }
+  gLog.sort(function(a,b) { return a.date < b.date ? -1 : 1; });
+  if (gLog.length > 60) gLog = gLog.slice(-60);
+  localStorage.setItem(glKey, JSON.stringify(gLog));
   showToast('✅ ' + floorLabel(currentFloor) + 'の注文を保存しました！');
   renderHistory();
   products.forEach(function(p) { updatePrevBadge(p.id); });
@@ -1283,6 +1303,13 @@ function deleteHistory(key) {
     const rec = JSON.parse(localStorage.getItem('diaper_sun_record_' + delFloor) || 'null');
     if (rec && rec.date === delDate) localStorage.removeItem('diaper_sun_record_' + delFloor);
   } catch(e) {}
+  // グラフ用ログからも削除
+  try {
+    const glKey2 = 'diaper_graph_log_' + delFloor;
+    let gLog2 = JSON.parse(localStorage.getItem(glKey2) || '[]');
+    gLog2 = gLog2.filter(function(g) { return g.date !== delDate; });
+    localStorage.setItem(glKey2, JSON.stringify(gLog2));
+  } catch(e) {}
   renderHistory();
   // ズレ表示・前回注文バッジを再計算
   products.forEach(function(p) { updateCard(p.id); updatePrevBadge(p.id); });
@@ -1290,6 +1317,8 @@ function deleteHistory(key) {
   if (gapPanel && gapPanel.style.display !== 'none') renderGapMobile();
   const sunPanel = document.getElementById('sun-hist-mobile');
   if (sunPanel && sunPanel.style.display !== 'none') renderSunHistMobile();
+  const grPanel2 = document.getElementById('graph-mobile');
+  if (grPanel2 && grPanel2.style.display !== 'none') renderGraphMobile();
 }
 function toggleHistory() {
   const body = document.getElementById("history-body");
@@ -1371,6 +1400,178 @@ function toggleGapMobile() {
   panel.style.display = isOpen ? 'none' : 'block';
   icon.textContent = isOpen ? '▼ 開く' : '▲ 閉じる';
   if (!isOpen) renderGapMobile();
+}
+
+var graphPid = null;
+
+function toggleGraphMobile() {
+  var panel = document.getElementById('graph-mobile');
+  var icon = document.getElementById('graph-toggle-icon');
+  var isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : 'block';
+  icon.textContent = isOpen ? '▼ 開く' : '▲ 閉じる';
+  if (!isOpen) {
+    if (graphPid === null) graphPid = products.filter(function(p){return !p.special;})[0].id;
+    renderGraphMobile();
+  }
+}
+
+function changeGraphProduct(sel) {
+  graphPid = parseInt(sel.value);
+  renderGraphMobile();
+}
+
+function collectGraphData(pid) {
+  // 1年分のデータを各保存先から統合（date → {s:在庫枚数, o:注文箱数}）
+  var map = {};
+  function ensure(d) { if (!map[d]) map[d] = { s: null, o: null }; return map[d]; }
+  var p = products.find(function(x) { return x.id === pid; });
+  // 長期ログ
+  try {
+    var gl = JSON.parse(localStorage.getItem('diaper_graph_log_' + currentFloor) || '[]');
+    gl.forEach(function(g) {
+      if (g.data && g.data[pid]) {
+        var e = ensure(g.date);
+        e.s = g.data[pid].s;
+        e.o = g.data[pid].o;
+      }
+    });
+  } catch(e) {}
+  // 注文履歴から補完
+  loadHistory().forEach(function(h) {
+    if (h.floor !== currentFloor || !h.orders || h.orders[pid] === undefined) return;
+    var o = h.orders[pid];
+    var qty = (typeof o === 'object') ? (o.qty || 0) : o;
+    var e = ensure(h.date);
+    if (e.o === null) e.o = qty;
+  });
+  // 日曜在庫予想履歴の在庫記録から補完
+  try {
+    var sh = JSON.parse(localStorage.getItem('diaper_sun_hist_' + currentFloor) || '[]');
+    sh.forEach(function(r) {
+      if (!r.stocks || !r.stocks[pid]) return;
+      var st = r.stocks[pid];
+      var e = ensure(r.date);
+      if (e.s === null) e.s = (st.boxes||0) * p.perBox + (st.bags||0) * p.perBag;
+    });
+  } catch(e) {}
+  // 1年以内に絞って昇順
+  var cutoff = new Date();
+  cutoff.setFullYear(cutoff.getFullYear() - 1);
+  var out = [];
+  Object.keys(map).sort().forEach(function(d) {
+    var parts = d.split('/');
+    if (parts.length === 3) {
+      var dt = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+      if (dt < cutoff) return;
+    }
+    out.push({ date: d, s: map[d].s, o: map[d].o });
+  });
+  return out;
+}
+
+function renderGraphMobile() {
+  var panel = document.getElementById('graph-mobile');
+  var normalProds = products.filter(function(p) { return !p.special; });
+  if (graphPid === null) graphPid = normalProds[0].id;
+  var p = products.find(function(x) { return x.id === graphPid; });
+  var data = collectGraphData(graphPid);
+
+  var selHtml = '<select onchange="changeGraphProduct(this)" style="width:100%;font-size:16px;padding:8px;border:1px solid #c8e6c9;border-radius:8px;font-family:inherit;background:#fff;margin-bottom:6px">';
+  normalProds.forEach(function(np) {
+    selHtml += '<option value="' + np.id + '"' + (np.id === graphPid ? ' selected' : '') + '>' + (np.short || np.name) + '</option>';
+  });
+  selHtml += '</select>';
+
+  if (data.length < 2) {
+    panel.innerHTML = selHtml + '<div style="color:#aaa;font-size:11px;padding:8px;text-align:center">グラフ表示には2回以上の注文確定の記録が必要です<br>（現在 ' + data.length + ' 件）</div>';
+    return;
+  }
+
+  // SVG描画
+  var W = 360, H = 190, padL = 34, padR = 30, padT = 16, padB = 26;
+  var plotW = W - padL - padR, plotH = H - padT - padB;
+  // 在庫は袋単位に換算して描画
+  var maxS = 1, maxO = 1;
+  data.forEach(function(d) {
+    if (d.s !== null) {
+      d.sBag = Math.round(d.s / p.perBag * 10) / 10;
+      if (d.sBag > maxS) maxS = d.sBag;
+    } else { d.sBag = null; }
+    if (d.o !== null && d.o > maxO) maxO = d.o;
+  });
+  maxS = Math.ceil(maxS);
+  if (maxS % 2 !== 0) maxS += 1; // 2袋単位に揃える
+  function px(i) { return padL + plotW * (data.length === 1 ? 0.5 : i / (data.length - 1)); }
+  function pyS(v) { return padT + plotH * (1 - v / maxS); }
+  function pyO(v) { return padT + plotH * (1 - v / maxO); }
+
+  var sPts = [], oPts = [], dots = '';
+  data.forEach(function(d, i) {
+    if (d.sBag !== null) {
+      sPts.push(px(i).toFixed(1) + ',' + pyS(d.sBag).toFixed(1));
+      var dotCol = d.sBag <= Math.round(p.perBox / p.perBag) ? '#e53935' : '#2a7a2a';
+      dots += '<circle cx="' + px(i).toFixed(1) + '" cy="' + pyS(d.sBag).toFixed(1) + '" r="2.5" fill="' + dotCol + '"/>';
+    }
+    if (d.o !== null) { oPts.push(px(i).toFixed(1) + ',' + pyO(d.o).toFixed(1)); dots += '<circle cx="' + px(i).toFixed(1) + '" cy="' + pyO(d.o).toFixed(1) + '" r="2.5" fill="#e65100"/>'; }
+  });
+
+  var firstD = data[0].date.replace(/^\d+\//, '');
+  var lastD = data[data.length-1].date.replace(/^\d+\//, '');
+  var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;background:#fff;border-radius:10px;border:1px solid #e0e0e0">'
+    + '<line x1="' + padL + '" y1="' + (padT+plotH) + '" x2="' + (padL+plotW) + '" y2="' + (padT+plotH) + '" stroke="#ccc"/>'
+    + '<line x1="' + padL + '" y1="' + padT + '" x2="' + padL + '" y2="' + (padT+plotH) + '" stroke="#a5d6a7"/>'
+    + '<line x1="' + (padL+plotW) + '" y1="' + padT + '" x2="' + (padL+plotW) + '" y2="' + (padT+plotH) + '" stroke="#ffcc80"/>'
+    + '<text x="' + (padL-3) + '" y="' + (padT+plotH) + '" font-size="9" fill="#999" text-anchor="end">0</text>';
+  // 在庫軸：2袋きざみの目盛り＋1箱分の袋数ごとに赤表示
+  // 例）白大（1箱=8袋）なら 8,16,24… が赤
+  var bagsPerBox = Math.round(p.perBox / p.perBag);
+  var sStep = maxS <= 24 ? 2 : Math.ceil(maxS / 24) * 2;
+  for (var sv = sStep; sv <= maxS; sv += sStep) {
+    if (sv % bagsPerBox === 0) continue; // 箱の倍数は赤目盛りとして別に描画
+    var sy = pyS(sv);
+    svg += '<line x1="' + padL + '" y1="' + sy.toFixed(1) + '" x2="' + (padL+3) + '" y2="' + sy.toFixed(1) + '" stroke="#2a7a2a"/>'
+      + '<text x="' + (padL-3) + '" y="' + (sy+3).toFixed(1) + '" font-size="9" fill="#2a7a2a" text-anchor="end">' + sv + '</text>';
+  }
+  // 箱の倍数（1箱分の袋数ごと）：赤文字＋薄い赤の補助線
+  for (var bv = bagsPerBox; bv <= maxS; bv += bagsPerBox) {
+    var by = pyS(bv);
+    svg += '<line x1="' + padL + '" y1="' + by.toFixed(1) + '" x2="' + (padL+plotW) + '" y2="' + by.toFixed(1) + '" stroke="#e53935" stroke-width="1" stroke-dasharray="3,3" opacity="0.35"/>'
+      + '<text x="' + (padL-3) + '" y="' + (by+3).toFixed(1) + '" font-size="9" font-weight="700" fill="#e53935" text-anchor="end">' + bv + '</text>';
+  }
+  svg += '<text x="' + (padL-3) + '" y="' + (padT-2) + '" font-size="9" fill="#2a7a2a" text-anchor="end">袋</text>';
+  // 注文軸：1箱きざみの目盛り（多すぎる場合は間引き）
+  var oStep = maxO <= 12 ? 1 : Math.ceil(maxO / 12);
+  for (var ov = oStep; ov <= maxO; ov += oStep) {
+    var oy = pyO(ov);
+    svg += '<line x1="' + (padL+plotW-3) + '" y1="' + oy.toFixed(1) + '" x2="' + (padL+plotW) + '" y2="' + oy.toFixed(1) + '" stroke="#e65100"/>'
+      + '<text x="' + (padL+plotW+3) + '" y="' + (oy+3).toFixed(1) + '" font-size="9" fill="#e65100">' + ov + '</text>';
+  }
+  svg += '<text x="' + (padL+plotW+3) + '" y="' + (padT+plotH) + '" font-size="9" fill="#e65100">箱</text>';
+  // X軸：2週間ごとに「M/D」ラベル
+  var lastLabelTime = null;
+  data.forEach(function(d, i) {
+    var parts = d.date.split('/');
+    if (parts.length !== 3) return;
+    var dt = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2])).getTime();
+    if (lastLabelTime !== null && dt - lastLabelTime < 14 * 86400000) return;
+    lastLabelTime = dt;
+    var mx = px(i);
+    svg += '<line x1="' + mx.toFixed(1) + '" y1="' + (padT+plotH) + '" x2="' + mx.toFixed(1) + '" y2="' + (padT+plotH+3) + '" stroke="#999"/>'
+      + '<text x="' + mx.toFixed(1) + '" y="' + (H-8) + '" font-size="9" fill="#999" text-anchor="middle">' + parseInt(parts[1]) + '/' + parseInt(parts[2]) + '</text>';
+  });
+  svg = svg
+    + (sPts.length > 1 ? '<polyline points="' + sPts.join(' ') + '" fill="none" stroke="#2a7a2a" stroke-width="2"/>' : '')
+    + (oPts.length > 1 ? '<polyline points="' + oPts.join(' ') + '" fill="none" stroke="#e65100" stroke-width="2" stroke-dasharray="4,3"/>' : '')
+    + dots
+    + '</svg>';
+
+  panel.innerHTML = selHtml + svg
+    + '<div style="display:flex;gap:14px;justify-content:center;font-size:11px;color:#555;margin-top:4px;padding-bottom:4px">'
+    + '<span><span style="display:inline-block;width:14px;height:3px;background:#2a7a2a;vertical-align:middle;margin-right:3px"></span>在庫（袋）</span>'
+    + '<span><span style="display:inline-block;width:14px;height:3px;background:#e65100;vertical-align:middle;margin-right:3px;background-image:linear-gradient(90deg,#e65100 60%,#fff 60%)"></span>注文（箱）</span>'
+    + '<span style="color:#999">記録 ' + data.length + ' 件</span>'
+    + '</div>';
 }
 
 function renderGapMobile() {
@@ -1755,7 +1956,7 @@ function toggleMode() {
     if (isAdminMode) {
       // daily-colはweeklyFixed=trueのものは非表示のまま
       if (el.id && el.id.startsWith('daily-col-') && el.dataset.weekly === 'true') return;
-      if (el.id === 'sun-hist-header' || el.id === 'gap-header') return;  // 個別に制御
+      if (el.id === 'sun-hist-header' || el.id === 'gap-header' || el.id === 'graph-header') return;  // 個別に制御
       if (el.classList.contains('save-bar')) el.style.display = 'flex';
       else if (el.tagName === 'BUTTON') el.style.display = 'inline-block';
       else el.style.display = 'block';
@@ -1787,6 +1988,13 @@ function toggleMode() {
     if (gapPanel) gapPanel.style.display = 'none';
     if (gapHeader) gapHeader.style.display = 'flex';
     if (gapIcon) gapIcon.textContent = '▼ 開く';
+    // グラフを閉じた状態で表示
+    var grPanel = document.getElementById('graph-mobile');
+    var grHeader = document.getElementById('graph-header');
+    var grIcon = document.getElementById('graph-toggle-icon');
+    if (grPanel) grPanel.style.display = 'none';
+    if (grHeader) grHeader.style.display = 'flex';
+    if (grIcon) grIcon.textContent = '▼ 開く';
     // 居室管理タブを表示
     document.getElementById('tab-room').style.display = 'inline-block';
     // カード再計算（ズレ表示など）
@@ -2088,6 +2296,14 @@ function exportData() {
   FLOORS.forEach(function(f) {
     data.floorMemos[f] = localStorage.getItem('diaper_room_memo_' + f) || '';
   });
+  // 注文履歴・日曜在庫予想履歴・グラフ用ログを追加
+  try { data.history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch(e) {}
+  data.sunHist = {};
+  data.graphLog = {};
+  FLOORS.forEach(function(f) {
+    try { data.sunHist[f] = JSON.parse(localStorage.getItem('diaper_sun_hist_' + f) || '[]'); } catch(e) {}
+    try { data.graphLog[f] = JSON.parse(localStorage.getItem('diaper_graph_log_' + f) || '[]'); } catch(e) {}
+  });
   const json = JSON.stringify(data, null, 2);
   const blob = new Blob([json], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -2159,6 +2375,14 @@ function importData(event) {
           if (data.floorMemos[f] !== undefined) localStorage.setItem('diaper_room_memo_' + f, data.floorMemos[f]);
         });
       }
+      // 注文履歴・日曜在庫予想履歴・グラフ用ログを復元
+      if (data.history) localStorage.setItem(HISTORY_KEY, JSON.stringify(data.history));
+      FLOORS.forEach(function(f) {
+        if (data.sunHist && data.sunHist[f]) localStorage.setItem('diaper_sun_hist_' + f, JSON.stringify(data.sunHist[f]));
+        if (data.graphLog && data.graphLog[f]) localStorage.setItem('diaper_graph_log_' + f, JSON.stringify(data.graphLog[f]));
+      });
+      renderHistory();
+      products.forEach(function(p) { updatePrevBadge(p.id); });
       syncInputsToState();
       reflectRoomToDaily(true);
       updateRoomReflectLabelMobile();
