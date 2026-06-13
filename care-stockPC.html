@@ -1197,7 +1197,8 @@ function doConfirmOrder() {
   }
   saveHistory(history);
   // 来週日曜の在庫予想を履歴として保存（4週分・同日上書き）
-  const sunRecord = { date: today, floor: floor, items: {}, stocks: {} };
+  // 日付はモバイル版と同じゼロ埋め形式で統一
+  const sunRecord = { date: dateStr, floor: floor, items: {}, stocks: {} };
   products.forEach(function(p) {
     sunRecord.items[p.id] = Math.round(calcSundayStock(p));
     sunRecord.stocks[p.id] = { boxes: state[floor][p.id].stockBoxes || 0, bags: state[floor][p.id].stockBags || 0 };
@@ -1205,7 +1206,7 @@ function doConfirmOrder() {
   const sunHistKey = 'diaper_sun_hist_' + floor;
   var sunHist = [];
   try { sunHist = JSON.parse(localStorage.getItem(sunHistKey) || '[]'); } catch(e) {}
-  const sameIdx = sunHist.findIndex(function(h) { return h.date === today; });
+  const sameIdx = sunHist.findIndex(function(h) { return h.date === dateStr || h.date === today; });
   if (sameIdx >= 0) {
     sunHist[sameIdx] = sunRecord;
   } else {
@@ -1758,7 +1759,9 @@ function deleteSunHist(idx) {
   let hist = [];
   try { hist = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
   hist.splice(idx, 1);
-  localStorage.setItem(key, JSON.stringify(hist));
+  const json = JSON.stringify(hist);
+  localStorage.setItem(key, json);
+  fbWrite(key, json);
   renderSunHist();
 }
 
@@ -1767,15 +1770,22 @@ function deletePcHistoryByDate(week) {
   const newHist = history.filter(function(h) { return !(h.week === week && h.floor === floor); });
   saveHistory(newHist);
   // 対応する日曜在庫予想の記録も削除（ズレ表示への反映を消す）
+  // 日付はゼロ埋め有無どちらの形式でも一致させる
+  const wkPad = week.replace(/\/(\d)(?=\/|$)/g, '/0$1');
   const sunKey = 'diaper_sun_hist_' + floor;
   try {
     let sunHist = JSON.parse(localStorage.getItem(sunKey) || '[]');
-    sunHist = sunHist.filter(function(r) { return r.date !== week; });
-    localStorage.setItem(sunKey, JSON.stringify(sunHist));
+    sunHist = sunHist.filter(function(r) { return r.date !== week && r.date !== wkPad; });
+    const json = JSON.stringify(sunHist);
+    localStorage.setItem(sunKey, json);
+    fbWrite(sunKey, json);
   } catch(e) {}
   try {
     const rec = JSON.parse(localStorage.getItem('diaper_sun_record_' + floor) || 'null');
-    if (rec && rec.date === week) localStorage.removeItem('diaper_sun_record_' + floor);
+    if (rec && (rec.date === week || rec.date === wkPad)) {
+      localStorage.removeItem('diaper_sun_record_' + floor);
+      fbWrite('diaper_sun_record_' + floor, 'null');
+    }
   } catch(e) {}
   renderHistory();
   // ズレ表示・前回注文を再計算
